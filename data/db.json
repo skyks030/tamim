@@ -1,0 +1,29 @@
+{
+  "chats": [
+    {
+      "id": "default-chat",
+      "name": "Sarah",
+      "avatarColor": "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
+      "messages": [
+        {
+          "id": 1,
+          "text": "You matched with Sarah! 💖",
+          "system": true
+        },
+        {
+          "id": 2,
+          "text": "20:30",
+          "system": true,
+          "time": true
+        }
+      ],
+      "presets": [
+        "Hey! 👋",
+        "How are you?",
+        "Wanna meet up?",
+        "Tell me more about yourself."
+      ]
+    }
+  ],
+  "activeChatId": "default-chat"
+}
