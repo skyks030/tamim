@@ -6,7 +6,7 @@ cd "$(dirname "$0")"
 echo "🚀 Building Docker Image..."
 # Exit immediately if a command exits with a non-zero status
 set -e
-docker build -t film-dating-app .
+docker build --no-cache -t film-dating-app .
 
 echo "🛑 Stopping old container..."
 docker stop film-dating-app-container 2>/dev/null || true

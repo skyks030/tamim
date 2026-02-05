@@ -71,7 +71,22 @@ const INITIAL_DB = {
     { id: 'sp3', text: "Offline", color: "gray" }
   ],
   // Actor Profile (Self)
-  actorAvatar: null // URL to image or null
+  actorAvatar: null, // URL to image or null
+  // Phase 2: Dating App
+  activeApp: 'messenger', // 'messenger' | 'dating'
+  datingProfiles: [
+    {
+      id: 'd1',
+      name: 'Elena',
+      age: 24,
+      bio: "Coffee addict ☕ | Travel ✈️ | Dog lover 🐶",
+      imageUrl: null,
+      isMatch: false
+    }
+  ],
+  activeDatingProfileId: 'd1',
+  datingAppName: 'Spark',
+  datingScenarios: []
 };
 
 // Load DB
@@ -85,6 +100,9 @@ if (fs.existsSync(DB_FILE)) {
     if (!db.activeChatId) db.activeChatId = INITIAL_DB.activeChatId;
     if (!db.statusPresets) db.statusPresets = INITIAL_DB.statusPresets; // Init Global Presets
     if (db.actorAvatar === undefined) db.actorAvatar = null;
+    // Phase 2 Init
+    if (!db.activeApp) db.activeApp = 'messenger';
+    if (!db.datingProfiles) db.datingProfiles = INITIAL_DB.datingProfiles;
 
 
     // Normalize Presets, Scenarios, and Match Message
@@ -237,15 +255,47 @@ io.on('connection', (socket) => {
       const filename = `${uuidv4()}.${ext}`;
       const filePath = path.join(UPLOADS_DIR, filename);
 
-      // Resize and Save using Sharp
-      // Maintain aspect ratio, width 128px
-      await sharp(req.file.buffer)
-        .resize(128, null, { withoutEnlargement: true })
-        .toFile(filePath);
+      // Helper to delete old file
+      const deleteOldFile = (url) => {
+        if (!url) return;
+        const oldFilename = path.basename(url);
+        const oldPath = path.join(UPLOADS_DIR, oldFilename);
+        if (fs.existsSync(oldPath)) {
+          try {
+            fs.unlinkSync(oldPath);
+          } catch (e) {
+            console.error("Failed to delete old image:", e);
+          }
+        }
+      };
+
+      // Find entity to clean up OLD image first
+      if (purpose === 'chat' && chatId) {
+        const chat = db.chats.find(c => c.id === chatId);
+        if (chat && chat.avatarImage) deleteOldFile(chat.avatarImage);
+      } else if (purpose === 'actor') {
+        if (db.actorAvatar) deleteOldFile(db.actorAvatar);
+      } else if (purpose === 'dating') {
+        const profileId = req.body.profileId;
+        const profile = db.datingProfiles.find(p => p.id === profileId);
+        if (profile && profile.imageUrl) deleteOldFile(profile.imageUrl);
+      }
+
+      // Save File
+      if (purpose === 'dating') {
+        // NO COMPRESSION for Dating App, but use ASYNC processing
+        await fs.promises.writeFile(filePath, req.file.buffer);
+      } else {
+        // Resize and Save using Sharp for others
+        // Maintain aspect ratio, width 128px
+        await sharp(req.file.buffer)
+          .resize(128, null, { withoutEnlargement: true })
+          .toFile(filePath);
+      }
 
       const publicUrl = `/uploads/${filename}`;
 
-      // Update DB
+      // Update DB with NEW image
       if (purpose === 'chat' && chatId) {
         const chat = db.chats.find(c => c.id === chatId);
         if (chat) {
@@ -257,6 +307,14 @@ io.on('connection', (socket) => {
         db.actorAvatar = publicUrl;
         saveDb();
         io.emit('data:update', db);
+      } else if (purpose === 'dating') {
+        const profileId = req.body.profileId;
+        const profile = db.datingProfiles.find(p => p.id === profileId);
+        if (profile) {
+          profile.imageUrl = publicUrl;
+          saveDb();
+          io.emit('data:update', db);
+        }
       }
 
       res.json({ success: true, url: publicUrl });
@@ -307,6 +365,19 @@ io.on('connection', (socket) => {
       chat.presets = chat.presets.filter(p => p.id !== presetId);
       saveDb();
       io.emit('data:update', db);
+    }
+  });
+
+  // Edit Preset Text
+  socket.on('control:update_preset', ({ chatId, presetId, text }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat && chat.presets) {
+      const preset = chat.presets.find(p => p.id === presetId);
+      if (preset) {
+        preset.text = text;
+        saveDb();
+        io.emit('data:update', db);
+      }
     }
   });
 
@@ -432,9 +503,153 @@ io.on('connection', (socket) => {
     }
   });
 
+  // --- APP SWITCHING ---
+  socket.on('control:switch_app', (appName) => {
+    db.activeApp = appName;
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // --- DATING APP EVENTS ---
+
+  // Create Profile
+  socket.on('control:create_dating_profile', (profileData) => {
+    const newProfile = {
+      id: uuidv4(),
+      name: profileData.name || "New Person",
+      age: profileData.age || 25,
+      bio: profileData.bio || "",
+      imageUrl: null, // Image handled via upload
+      avatarColor: `linear-gradient(135deg, #${Math.floor(Math.random() * 16777215).toString(16)} 0%, #${Math.floor(Math.random() * 16777215).toString(16)} 100%)`
+    };
+    db.datingProfiles.push(newProfile);
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update Profile
+  socket.on('control:update_dating_profile', ({ id, ...updates }) => {
+    const profile = db.datingProfiles.find(p => p.id === id);
+    if (profile) {
+      Object.assign(profile, updates);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Delete Profile
+  socket.on('control:delete_dating_profile', (id) => {
+    db.datingProfiles = db.datingProfiles.filter(p => p.id !== id);
+    if (db.activeDatingProfileId === id) {
+      db.activeDatingProfileId = db.datingProfiles[0]?.id || null;
+    }
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Reorder Profiles
+  socket.on('control:reorder_dating_profiles', (newProfiles) => {
+    if (Array.isArray(newProfiles)) {
+      db.datingProfiles = newProfiles;
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Set Active Profile (Jump to)
+  socket.on('control:set_active_dating_profile', (profileId) => {
+    db.activeDatingProfileId = profileId;
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Actor Swipe (Move to next)
+  socket.on('actor:dating_swipe', (nextProfileId) => {
+    db.activeDatingProfileId = nextProfileId;
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Handle Dating Profile Image Upload (Server-side handled via POST /api/upload mostly, but we need DB update logic there too)
+  // See /api/upload modification below or reuse existing if general enough.
+  // Actually, let's update /api/upload to handle 'dating' purpose.
+
+  // --- DATING SCENARIOS ---
+  socket.on('control:save_dating_scenario', (name) => {
+    const scenario = {
+      id: uuidv4(),
+      name: name || `Backup ${new Date().toLocaleTimeString()}`,
+      profiles: JSON.parse(JSON.stringify(db.datingProfiles)), // Deep copy
+      actorAvatar: db.actorAvatar, // Save Actor Avatar
+      actorAvatarColor: db.actorAvatarColor
+    };
+    if (!db.datingScenarios) db.datingScenarios = [];
+    db.datingScenarios.push(scenario);
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  socket.on('control:load_dating_scenario', (scenarioId) => {
+    if (db.datingScenarios) {
+      const scenario = db.datingScenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        db.datingProfiles = JSON.parse(JSON.stringify(scenario.profiles)); // Restore
+        db.actorAvatar = scenario.actorAvatar; // Restore Avatar
+        db.actorAvatarColor = scenario.actorAvatarColor;
+
+        // Reset active ID if invalid
+        if (!db.datingProfiles.some(p => p.id === db.activeDatingProfileId)) {
+          db.activeDatingProfileId = db.datingProfiles[0]?.id || null;
+        }
+        saveDb();
+        io.emit('data:update', db);
+      }
+    }
+  });
+
+  socket.on('control:delete_dating_scenario', (scenarioId) => {
+    if (db.datingScenarios) {
+      db.datingScenarios = db.datingScenarios.filter(s => s.id !== scenarioId);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  socket.on('control:rename_dating_scenario', ({ scenarioId, name }) => {
+    if (db.datingScenarios) {
+      const scenario = db.datingScenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        scenario.name = name;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    }
+  });
+
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
+});
+
+// --- REST API ROUTES ---
+app.get('/api/data', (req, res) => {
+  // Ensure datingScenarios exists in response even if not in DB file yet
+  if (!db.datingScenarios) db.datingScenarios = [];
+  res.json(db);
+});
+
+app.post('/api/control/app-name', (req, res) => {
+  const { name } = req.body;
+  if (name) {
+    console.log(`[REST] Updating App Name to: ${name}`);
+    db.datingAppName = name;
+    saveDb();
+    io.emit('data:update', db);
+    res.json({ success: true, name });
+  } else {
+    res.status(400).json({ error: "Name required" });
+  }
 });
 
 // Handle React routing
