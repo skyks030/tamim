@@ -37,19 +37,32 @@ const INITIAL_DB = {
       id: "default-chat",
       name: "Sarah",
       avatarColor: "linear-gradient(135deg, #FF6B6B 0%, #FF8E53 100%)",
+      matchMessage: "You matched with Sarah! 💖", // Customizable Welcome Message
       messages: [
         { id: 1, text: "You matched with Sarah! 💖", system: true },
         { id: 2, text: "20:30", system: true, time: true },
       ],
+      // Status
+      status: "Online recently",
+      statusColor: "gray",
+      // Presets: Array of { id, text, sender }
       presets: [
-        "Hey! 👋",
-        "How are you?",
-        "Wanna meet up?",
-        "Tell me more about yourself."
-      ]
+        { id: 'p1', text: "Hey! 👋", sender: 'match' },
+        { id: 'p2', text: "How are you?", sender: 'match' },
+        { id: 'p3', text: "Wanna meet up?", sender: 'match' },
+        { id: 'p4', text: "Tell me more about yourself.", sender: 'match' }
+      ],
+      // Scenarios: Array of { id, name, messages }
+      scenarios: []
     }
   ],
-  activeChatId: "default-chat"
+  activeChatId: "default-chat",
+  // Global Status Presets
+  statusPresets: [
+    { id: 'sp1', text: "Online", color: "#4ade80" }, // Green
+    { id: 'sp2', text: "Online recently", color: "gray" },
+    { id: 'sp3', text: "Offline", color: "gray" }
+  ]
 };
 
 // Load DB
@@ -58,9 +71,29 @@ if (fs.existsSync(DB_FILE)) {
   try {
     const fileData = fs.readFileSync(DB_FILE, 'utf8');
     db = JSON.parse(fileData);
-    // Merge structure updates if any (simple check)
+    // Merge structure updates & Normalize
     if (!db.chats) db.chats = INITIAL_DB.chats;
     if (!db.activeChatId) db.activeChatId = INITIAL_DB.activeChatId;
+    if (!db.statusPresets) db.statusPresets = INITIAL_DB.statusPresets; // Init Global Presets
+
+
+    // Normalize Presets, Scenarios, and Match Message
+    db.chats.forEach(chat => {
+      if (!chat.scenarios) chat.scenarios = [];
+      if (!chat.matchMessage) chat.matchMessage = `You matched with ${chat.name}! 💖`; // Default
+      if (!chat.status) chat.status = "Online recently";
+      if (!chat.statusColor) chat.statusColor = "gray";
+
+      if (chat.presets) {
+        chat.presets = chat.presets.map((p, idx) => {
+          if (typeof p === 'string') return { id: `legacy-${idx}`, text: p, sender: 'match' };
+          return p;
+        });
+      } else {
+        chat.presets = [];
+      }
+    });
+
   } catch (e) {
     console.error("Failed to load DB, using initial state:", e);
   }
@@ -94,10 +127,14 @@ io.on('connection', (socket) => {
       id: uuidv4(),
       name: name || "New Match",
       avatarColor: `linear-gradient(135deg, #${Math.floor(Math.random() * 16777215).toString(16)} 0%, #${Math.floor(Math.random() * 16777215).toString(16)} 100%)`, // Random gradient
+      matchMessage: `You matched with ${name || "New Match"}! 💖`,
+      status: "Online recently",
+      statusColor: "gray",
       messages: [
         { id: Date.now(), text: `You matched with ${name || "New Match"}! 💖`, system: true }
       ],
-      presets: ["Hey! 👋"]
+      presets: [{ id: uuidv4(), text: "Hey! 👋", sender: 'match' }],
+      scenarios: []
     };
     db.chats.push(newChat);
     saveDb();
@@ -117,28 +154,148 @@ io.on('connection', (socket) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       chat.name = name;
-      // Update match system message if it's the first one? Optional.
       saveDb();
       io.emit('data:update', db);
     }
   });
 
-  // Add Preset
-  socket.on('control:save_preset', ({ chatId, text }) => {
+  // Delete Chat
+  socket.on('control:delete_chat', (chatId) => {
+    db.chats = db.chats.filter(c => c.id !== chatId);
+    if (db.activeChatId === chatId) {
+      db.activeChatId = db.chats[0]?.id || null;
+    }
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // --- STATUS MANAGEMENT ---
+
+  // Set Status
+  socket.on('control:set_status', ({ chatId, text, color }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat) {
+      chat.status = text;
+      chat.statusColor = color;
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Add Status Preset
+  socket.on('control:add_status_preset', ({ text, color }) => {
+    if (!db.statusPresets) db.statusPresets = [];
+    db.statusPresets.push({ id: uuidv4(), text, color });
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Delete Status Preset
+  socket.on('control:delete_status_preset', (presetId) => {
+    if (db.statusPresets) {
+      db.statusPresets = db.statusPresets.filter(p => p.id !== presetId);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Update Match Message (Welcome Message)
+  socket.on('control:update_match_message', ({ chatId, message }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat) {
+      chat.matchMessage = message;
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Add Preset (Enhanced)
+  socket.on('control:save_preset', ({ chatId, text, sender }) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       if (!chat.presets) chat.presets = [];
-      chat.presets.push(text);
+      chat.presets.push({ id: uuidv4(), text, sender: sender || 'match' });
       saveDb();
       io.emit('data:update', db);
     }
   });
 
-  // Control sending a message (Match sending)
-  socket.on('control:send_message', ({ chatId, text }) => {
+  // Delete Preset
+  socket.on('control:delete_preset', ({ chatId, presetId }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat && chat.presets) {
+      chat.presets = chat.presets.filter(p => p.id !== presetId);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // --- SCENARIO MANAGEMENT ---
+
+  // Save Scenario (Backup) - Excludes Welcome Message
+  socket.on('control:save_scenario', ({ chatId, name }) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
-      const msg = { id: Date.now(), text, sender: 'match' };
+      // Filter out the first message if it's the system match message
+      // We assume the first message is ALWAYS the match message in this architecture
+      const messagesToSave = chat.messages.filter((m, idx) => idx > 0 || !m.system);
+
+      const scenario = {
+        id: uuidv4(),
+        name: name || `Backup ${new Date().toLocaleTimeString()}`,
+        messages: JSON.parse(JSON.stringify(messagesToSave))
+      };
+      chat.scenarios.push(scenario);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Load Scenario - Prepends Current Welcome Message
+  socket.on('control:load_scenario', ({ chatId, scenarioId }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat && chat.scenarios) {
+      const scenario = chat.scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        // Construct new message list: Welcome Message + Scenario Messages
+        const welcomeMsg = { id: Date.now(), text: chat.matchMessage || `You matched with ${chat.name}! 💖`, system: true };
+        chat.messages = [welcomeMsg, ...JSON.parse(JSON.stringify(scenario.messages))];
+
+        saveDb();
+        io.emit('data:update', db);
+        io.emit('actor:reset', chatId); // Signal reload
+      }
+    }
+  });
+
+  // Delete Scenario
+  socket.on('control:delete_scenario', ({ chatId, scenarioId }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat && chat.scenarios) {
+      chat.scenarios = chat.scenarios.filter(s => s.id !== scenarioId);
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Rename Scenario
+  socket.on('control:rename_scenario', ({ chatId, scenarioId, name }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat && chat.scenarios) {
+      const scenario = chat.scenarios.find(s => s.id === scenarioId);
+      if (scenario) {
+        scenario.name = name;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    }
+  });
+
+  // Control sending a message (Match OR Actor from Control)
+  socket.on('control:send_message', ({ chatId, text, sender }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat) {
+      const msg = { id: Date.now(), text, sender: sender || 'match' }; // Allow 'me' or 'match'
       chat.messages.push(msg);
       saveDb();
 
@@ -148,12 +305,13 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Control Clear Chat
+  // Control Clear Chat (Preserve Welcome Message)
   socket.on('control:clear', (chatId) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
+      // Reset to just the welcome message
       chat.messages = [
-        { id: Date.now(), text: `You matched with ${chat.name}! 💖`, system: true }
+        { id: Date.now(), text: chat.matchMessage || `You matched with ${chat.name}! 💖`, system: true }
       ];
       saveDb();
       io.emit('data:update', db);
@@ -161,17 +319,17 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Control Reset Scene (Specific Chat)
+  // Control Reset Scene (Specific Chat) -- DEPRECATED / MERGED
+  // User asked to remove specific buttons, but we'll keep logic if needed or repurpose.
+  // Actually, user wants ONE button to clear all. 'control:clear' above does exactly that now (empty array).
+  // We can remove this Listener or keep it as legacy no-op. Let's keep it minimal or remove.
   socket.on('control:reset', (chatId) => {
+    // Legacy reset, maybe restore default match message?
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
-      chat.messages = [
-        { id: 1, text: `You matched with ${chat.name}! 💖`, system: true },
-        { id: 2, text: "20:30", system: true, time: true },
-      ];
+      chat.messages = [{ id: Date.now(), text: `You matched with ${chat.name}! 💖`, system: true }];
       saveDb();
       io.emit('data:update', db);
-      io.emit('actor:reset', chatId);
     }
   });
 

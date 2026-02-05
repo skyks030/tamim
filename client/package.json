@@ -10,11 +10,12 @@
         "preview": "vite preview"
     },
     "dependencies": {
+        "framer-motion": "^10.16.4",
+        "lucide-react": "^0.292.0",
         "react": "^18.2.0",
         "react-dom": "^18.2.0",
-        "socket.io-client": "^4.7.2",
-        "framer-motion": "^10.16.4",
-        "lucide-react": "^0.292.0"
+        "react-simple-keyboard": "^3.7.4",
+        "socket.io-client": "^4.7.2"
     },
     "devDependencies": {
         "@types/react": "^18.2.37",

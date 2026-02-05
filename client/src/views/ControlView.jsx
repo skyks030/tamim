@@ -4,11 +4,15 @@ import { Plus, Edit2, Save, Send, Trash2, RefreshCw, MessageSquare } from 'lucid
 export default function ControlView({ socket, data }) {
     const [selectedChatId, setSelectedChatId] = useState(null);
     const [newChatName, setNewChatName] = useState("");
-    const [renameValue, setRenameValue] = useState("");
     const [customPresetValue, setCustomPresetValue] = useState("");
+    const [scenarioName, setScenarioName] = useState("");
 
-    const { chats, activeChatId } = data;
+    const { chats, activeChatId, statusPresets } = data; // Get global presets
     const selectedChat = chats.find(c => c.id === selectedChatId);
+
+    // Temp state for new status
+    const [newStatusText, setNewStatusText] = useState("");
+    const [newStatusColor, setNewStatusColor] = useState("gray");
 
     // Default to active chat if none selected locally
     useEffect(() => {
@@ -18,12 +22,8 @@ export default function ControlView({ socket, data }) {
     }, [activeChatId]);
 
     // Update rename value when chat changes
-    useEffect(() => {
-        if (selectedChat) {
-            setRenameValue(selectedChat.name);
-        }
-    }, [selectedChat]);
-
+    // This useEffect is removed as renameValue is no longer a state variable in the provided diff.
+    // However, the input for renameValue still exists, implying it should be derived from selectedChat.name directly.
 
     const handleCreateChat = () => {
         socket.emit('control:create_chat', newChatName);
@@ -34,28 +34,89 @@ export default function ControlView({ socket, data }) {
         socket.emit('control:select_chat', chatId);
     };
 
-    const handleUpdateName = () => {
-        if (selectedChat && renameValue.trim()) {
-            socket.emit('control:update_chat', { chatId: selectedChat.id, name: renameValue });
+    const handleUpdateName = (newName) => { // Modified to take newName directly
+        if (selectedChat && newName.trim()) {
+            socket.emit('control:update_chat', { chatId: selectedChat.id, name: newName });
         }
     };
 
-    const handleAddPreset = () => {
+    const handleUpdateMatchMessage = (newMessage) => {
+        if (selectedChat && newMessage.trim()) {
+            socket.emit('control:update_match_message', { chatId: selectedChat.id, message: newMessage });
+        }
+    };
+
+    const handleDeleteChat = (chatId) => {
+        const chat = chats.find(c => c.id === chatId);
+        if (chat && confirm(`Delete chat "${chat.name}"?`)) {
+            socket.emit('control:delete_chat', chatId);
+            if (selectedChatId === chatId) setSelectedChatId(null);
+        }
+    };
+
+    const handleSetStatus = (text, color) => {
+        if (selectedChat) {
+            socket.emit('control:set_status', { chatId: selectedChat.id, text, color });
+        }
+    };
+
+    const handleAddStatusPreset = () => {
+        if (newStatusText.trim()) {
+            socket.emit('control:add_status_preset', { text: newStatusText, color: newStatusColor });
+            setNewStatusText("");
+        }
+    };
+
+    const handleDeleteStatusPreset = (id) => {
+        if (confirm("Delete status preset?")) {
+            socket.emit('control:delete_status_preset', id);
+        }
+    };
+
+    const handleAddPreset = (sender = 'match') => {
         if (selectedChat && customPresetValue.trim()) {
-            socket.emit('control:save_preset', { chatId: selectedChat.id, text: customPresetValue });
+            socket.emit('control:save_preset', { chatId: selectedChat.id, text: customPresetValue, sender });
             setCustomPresetValue("");
+        }
+    };
+
+    const handleDeletePreset = (presetId) => {
+        if (confirm("Delete this preset?")) {
+            socket.emit('control:delete_preset', { chatId: selectedChat.id, presetId });
+        }
+    };
+
+    const handleSaveScenario = () => {
+        if (selectedChat && scenarioName.trim()) {
+            socket.emit('control:save_scenario', { chatId: selectedChat.id, name: scenarioName });
+            setScenarioName("");
+        }
+    };
+
+    const handleLoadScenario = (scenarioId) => {
+        if (confirm("This will overwrite current messages. Continue?")) {
+            socket.emit('control:load_scenario', { chatId: selectedChat.id, scenarioId });
+        }
+    };
+
+    const handleDeleteScenario = (scenarioId) => {
+        if (confirm("Delete this backup?")) {
+            socket.emit('control:delete_scenario', { chatId: selectedChat.id, scenarioId });
         }
     };
 
     // Actions
     const sendTyping = () => socket.emit('control:typing_start', selectedChatId);
     const sendMessage = (text, sender = 'match') => socket.emit('control:send_message', { chatId: selectedChatId, text, sender });
-    const resetScene = () => socket.emit('control:reset', selectedChatId);
-    const clearChat = () => socket.emit('control:clear', selectedChatId);
+    const clearChat = () => {
+        if (confirm("DELETE ALL MESSAGES? This cannot be undone.")) {
+            socket.emit('control:clear', selectedChatId);
+        }
+    };
 
 
     return (
-        <div className="control-panel" style={{ maxWidth: '900px' }}>
+        <div className="control-panel" style={{ maxWidth: '1200px', margin: '0 auto' }}>
 
             {/* Header / Connection Status */}
             <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -113,7 +174,23 @@ export default function ControlView({ socket, data }) {
                                     </div>
                                     <span>{chat.name}</span>
                                 </div>
-                                {activeChatId === chat.id && <span style={{ fontSize: '0.7rem', color: '#10b981' }}>ACTIVE</span>}
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                    {activeChatId === chat.id && <span style={{ fontSize: '0.7rem', color: '#10b981' }}>ACTIVE</span>}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
+                                        style={{
+                                            background: 'transparent',
+                                            border: 'none',
+                                            color: '#666',
+                                            cursor: 'pointer',
+                                            padding: 4,
+                                            opacity: 0.6
+                                        }}
+                                        className="hover-danger"
+                                    >
+                                        <Trash2 size={14} />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -124,75 +201,221 @@ export default function ControlView({ socket, data }) {
                 <div className="glass" style={{ padding: '20px', borderRadius: '16px' }}>
                     {selectedChat ? (
                         <>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 15 }}>
-                                <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                                    <input
-                                        value={renameValue}
-                                        onChange={e => setRenameValue(e.target.value)}
-                                        style={{ background: 'transparent', border: '1px solid #444', color: 'white', padding: 5, borderRadius: 4, fontSize: '1.2rem' }}
-                                    />
-                                    <button className="control-btn" style={{ width: 'auto', marginBottom: 0, padding: 8 }} onClick={handleUpdateName}>
-                                        <Save size={16} />
-                                    </button>
-                                </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 15, marginBottom: 20, borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: 15 }}>
 
-                                <button
-                                    className={`control-btn ${activeChatId === selectedChat.id ? 'primary' : ''}`}
-                                    style={{ width: 'auto', marginBottom: 0 }}
-                                    onClick={() => handleSelectActive(selectedChat.id)}
-                                    disabled={activeChatId === selectedChat.id}
-                                >
-                                    {activeChatId === selectedChat.id ? 'Currently Active on Screen' : 'Set Active on Screen'}
-                                </button>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 10, flex: 1, paddingRight: 20 }}>
+                                        {/* Name Editor */}
+                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#888', width: 80 }}>Chat Name:</span>
+                                            <input
+                                                value={selectedChat.name}
+                                                onChange={e => handleUpdateName(e.target.value)}
+                                                style={{ background: 'transparent', border: '1px solid #444', color: 'white', padding: 5, borderRadius: 4, fontSize: '1.1rem', flex: 1 }}
+                                            />
+                                        </div>
+                                        {/* Match Message Editor */}
+                                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#888', width: 80 }}>Welcome:</span>
+                                            <input
+                                                value={selectedChat.matchMessage || ""}
+                                                onChange={e => handleUpdateMatchMessage(e.target.value)}
+                                                style={{ background: 'transparent', border: '1px solid #444', color: 'var(--text-secondary)', padding: 5, borderRadius: 4, fontSize: '0.9rem', flex: 1 }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <button
+                                        className={`control-btn ${activeChatId === selectedChat.id ? 'primary' : ''}`}
+                                        style={{ width: 'auto', marginBottom: 0, height: 'fit-content' }}
+                                        onClick={() => handleSelectActive(selectedChat.id)}
+                                        disabled={activeChatId === selectedChat.id}
+                                    >
+                                        {activeChatId === selectedChat.id ? 'Active on Screen' : 'Set Active'}
+                                    </button>
+
+                                </div>
                             </div>
 
                             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
-                                {/* LEFT: ACTIONS */}
-                                <div>
-                                    <h4>Scene Actions</h4>
-                                    <button className="control-btn" onClick={sendTyping}>
-                                        <MessageSquare size={16} style={{ marginRight: 8 }} />
-                                        Trigger Typing (3s)
-                                    </button>
-                                    <button className="control-btn danger" onClick={clearChat}>
-                                        <Trash2 size={16} style={{ marginRight: 8 }} />
-                                        Clear Messages
-                                    </button>
-                                    <button className="control-btn danger" onClick={resetScene}>
-                                        <RefreshCw size={16} style={{ marginRight: 8 }} />
-                                        Full Reset
-                                    </button>
-                                </div>
 
-                                {/* RIGHT: PRESETS */}
-                                <div>
-                                    <h4>Message Presets</h4>
-                                    <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
-                                        <input
-                                            className="chat-input-field"
-                                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
-                                            placeholder="Add custom preset..."
-                                            value={customPresetValue}
-                                            onChange={e => setCustomPresetValue(e.target.value)}
-                                        />
-                                        <button className="control-btn" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }} onClick={handleAddPreset}>
-                                            <Plus size={16} />
+                                {/* LEFT COLUMN */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+                                    {/* ACTIONS */}
+                                    <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
+                                        <h4 style={{ marginTop: 0 }}>Live Controls</h4>
+                                        <button className="control-btn" onClick={sendTyping}>
+                                            <MessageSquare size={16} style={{ marginRight: 8 }} />
+                                            Trigger Typing (3s)
+                                        </button>
+                                        <button className="control-btn danger" onClick={clearChat} style={{ marginTop: 10 }}>
+                                            <Trash2 size={16} style={{ marginRight: 8 }} />
+                                            DELETE ALL MESSAGES
                                         </button>
                                     </div>
 
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '300px', overflowY: 'auto' }}>
-                                        {selectedChat.presets?.map((text, idx) => (
-                                            <div key={idx} style={{ display: 'flex', gap: 5 }}>
-                                                <button
-                                                    className="control-btn primary"
-                                                    style={{ marginBottom: 0, padding: '8px 12px', textAlign: 'left', fontSize: '0.9rem' }}
-                                                    onClick={() => sendMessage(text)}
-                                                >
-                                                    <Send size={14} style={{ marginRight: 8 }} />
-                                                    {text}
-                                                </button>
-                                            </div>
-                                        ))}
+                                    {/* STATUS MANAGEMENT */}
+                                    <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
+                                        <h4 style={{ marginTop: 0 }}>Online Status</h4>
+                                        {/* Current Status Display */}
+                                        <div style={{ marginBottom: 10, fontSize: '0.9rem' }}>
+                                            Current: <span style={{ color: selectedChat.statusColor || 'gray', fontWeight: 'bold' }}>{selectedChat.status || "Default"}</span>
+                                        </div>
+
+                                        {/* Presets List */}
+                                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 5, marginBottom: 15 }}>
+                                            {(statusPresets || []).map(preset => (
+                                                <div key={preset.id} style={{ display: 'flex', alignItems: 'center', background: 'rgba(255,255,255,0.1)', borderRadius: 20, paddingRight: 5 }}>
+                                                    <button
+                                                        className="control-btn"
+                                                        style={{
+                                                            marginBottom: 0, padding: '5px 10px', borderRadius: 20,
+                                                            background: 'transparent',
+                                                            color: preset.color,
+                                                            border: 'none'
+                                                        }}
+                                                        onClick={() => handleSetStatus(preset.text, preset.color)}
+                                                    >
+                                                        {preset.text}
+                                                    </button>
+                                                    <div
+                                                        style={{ cursor: 'pointer', opacity: 0.5, padding: 2 }}
+                                                        onClick={(e) => { e.stopPropagation(); handleDeleteStatusPreset(preset.id); }}
+                                                    >
+                                                        <Trash2 size={10} />
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        {/* Add New Status */}
+                                        <div style={{ display: 'flex', gap: 5 }}>
+                                            <input
+                                                placeholder="New Status..."
+                                                value={newStatusText}
+                                                onChange={e => setNewStatusText(e.target.value)}
+                                                className="chat-input-field"
+                                                style={{ height: 30, fontSize: '0.8rem', borderRadius: 6, flex: 1 }}
+                                            />
+                                            <select
+                                                value={newStatusColor}
+                                                onChange={e => setNewStatusColor(e.target.value)}
+                                                style={{ background: '#333', color: 'white', border: 'none', borderRadius: 6, fontSize: '0.8rem' }}
+                                            >
+                                                <option value="gray">Gray</option>
+                                                <option value="#4ade80">Green</option>
+                                                <option value="#ef4444">Red</option>
+                                                <option value="#60a5fa">Blue</option>
+                                            </select>
+                                            <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: '0 8px' }} onClick={handleAddStatusPreset}>
+                                                <Plus size={14} />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* SCENARIOS / BACKUPS */}
+                                    <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
+                                        <h4 style={{ marginTop: 0 }}>Chat History Backups</h4>
+                                        <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
+                                            <input
+                                                className="chat-input-field"
+                                                style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
+                                                placeholder="Backup name..."
+                                                value={scenarioName}
+                                                onChange={e => setScenarioName(e.target.value)}
+                                            />
+                                            <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }} onClick={handleSaveScenario}>
+                                                <Save size={16} />
+                                            </button>
+                                        </div>
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '200px', overflowY: 'auto' }}>
+                                            {(selectedChat.scenarios || []).length === 0 && <span style={{ color: '#666', fontStyle: 'italic', fontSize: '0.8rem' }}>No backups yet.</span>}
+                                            {selectedChat.scenarios?.map(scenario => (
+                                                <div key={scenario.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 6 }}>
+                                                    <span style={{ fontSize: '0.9rem' }}>{scenario.name}</span>
+                                                    <div style={{ display: 'flex', gap: 5 }}>
+                                                        <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: 5, fontSize: '0.7rem' }} onClick={() => handleLoadScenario(scenario.id)}>
+                                                            LOAD
+                                                        </button>
+                                                        <button className="control-btn danger" style={{ width: 'auto', marginBottom: 0, padding: 5 }} onClick={() => handleDeleteScenario(scenario.id)}>
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+
+                                </div>
+
+                                {/* RIGHT COLUMN: PRESETS */}
+                                <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
+                                    <h4 style={{ marginTop: 0 }}>Message Presets</h4>
+
+                                    <div style={{ display: 'flex', gap: 5, marginBottom: 5 }}>
+                                        <input
+                                            className="chat-input-field"
+                                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
+                                            placeholder="Add preset message..."
+                                            value={customPresetValue}
+                                            onChange={e => setCustomPresetValue(e.target.value)}
+                                        />
+                                    </div>
+                                    <div style={{ display: 'flex', gap: 5, marginBottom: 15 }}>
+                                        <button className="control-btn secondary" style={{ marginBottom: 0, fontSize: '0.8rem' }} onClick={() => handleAddPreset('match')}>
+                                            + as Match
+                                        </button>
+                                        <button className="control-btn secondary" style={{ marginBottom: 0, fontSize: '0.8rem' }} onClick={() => handleAddPreset('me')}>
+                                            + as Actor
+                                        </button>
+                                    </div>
+
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '400px', overflowY: 'auto' }}>
+                                        {selectedChat.presets?.map((preset, idx) => {
+                                            // Handle legacy string presets temporarily
+                                            const isObj = typeof preset === 'object';
+                                            const text = isObj ? preset.text : preset;
+                                            const sender = isObj ? preset.sender : 'match';
+                                            const id = isObj ? preset.id : `legacy-${idx}`;
+
+                                            // Ensure we don't break if id is missing in legacy
+                                            return (
+                                                <div key={id} style={{ display: 'flex', gap: 5, alignItems: 'center' }}>
+                                                    <div style={{
+                                                        flex: 1,
+                                                        display: 'flex',
+                                                        gap: 5,
+                                                        flexDirection: sender === 'me' ? 'row-reverse' : 'row'
+                                                    }}>
+                                                        <button
+                                                            className={`control-btn ${sender === 'me' ? 'secondary' : 'primary'}`}
+                                                            style={{
+                                                                marginBottom: 0,
+                                                                padding: '8px 12px',
+                                                                textAlign: 'left',
+                                                                fontSize: '0.9rem',
+                                                                flex: 1,
+                                                                opacity: 0.9
+                                                            }}
+                                                            onClick={() => sendMessage(text, sender)}
+                                                        >
+                                                            {sender === 'me' ? '👤 ' : '❤️ '}
+                                                            {text}
+                                                        </button>
+                                                    </div>
+                                                    <button
+                                                        className="control-btn danger"
+                                                        style={{ width: 'auto', marginBottom: 0, padding: 8 }}
+                                                        onClick={() => handleDeletePreset(id)}
+                                                    >
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                </div>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -205,6 +428,6 @@ export default function ControlView({ socket, data }) {
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 }
