@@ -1,210 +1,69 @@
 {
   "chats": [
     {
-      "id": "d8806a66-e126-4408-8261-314adb8ea5d1",
-      "name": "zven",
-      "avatarColor": "linear-gradient(135deg, #11a278 0%, #870315 100%)",
-      "messages": [
-        {
-          "id": 1770248299783,
-          "text": "You matched with zven",
-          "system": true
-        },
-        {
-          "id": 1770248305810,
-          "text": "wie gehts?",
-          "sender": "match"
-        },
-        {
-          "id": 1770248317050,
-          "text": "ghuj",
-          "sender": "me"
-        },
-        {
-          "id": 1770248321923,
-          "text": "lol",
-          "sender": "match"
-        },
-        {
-          "id": 1770248338924,
-          "text": "mhgvm",
-          "sender": "me"
-        },
-        {
-          "id": 1770248339430,
-          "text": "...",
-          "sender": "me"
-        },
-        {
-          "id": 1770248340520,
-          "text": "lol",
-          "sender": "match"
-        },
-        {
-          "id": 1770248341268,
-          "text": "Hey! 👋",
-          "sender": "match"
-        },
-        {
-          "id": 1770248341667,
-          "text": "lol",
-          "sender": "match"
-        },
-        {
-          "id": 1770248342298,
-          "text": "mhgvm",
-          "sender": "me"
-        },
-        {
-          "id": 1770248342677,
-          "text": "...",
-          "sender": "me"
-        }
-      ],
-      "presets": [
-        {
-          "id": "legacy-0",
-          "text": "Hey! 👋",
-          "sender": "match"
-        },
-        {
-          "id": "legacy-1",
-          "text": "lol",
-          "sender": "match"
-        },
-        {
-          "id": "5e7ad955-c008-431e-b14c-6c63d5785a05",
-          "text": "mhgvm",
-          "sender": "me"
-        },
-        {
-          "id": "a87ccb79-2900-4493-a078-8d24642b7d34",
-          "text": "...",
-          "sender": "me"
-        },
-        {
-          "id": "9c8069ab-8127-47d8-b19c-a9bb13cd3a6e",
-          "text": "wie gehts?",
-          "sender": "match"
-        }
-      ],
-      "scenarios": [
-        {
-          "id": "e48c3048-c28a-4b81-a542-1775e4df9788",
-          "name": "SCEEN 01",
-          "messages": [
-            {
-              "id": 1770248299783,
-              "text": "You matched with zven",
-              "system": true
-            },
-            {
-              "id": 1770248305810,
-              "text": "wie gehts?",
-              "sender": "match"
-            },
-            {
-              "id": 1770248317050,
-              "text": "ghuj",
-              "sender": "me"
-            },
-            {
-              "id": 1770248321923,
-              "text": "lol",
-              "sender": "match"
-            },
-            {
-              "id": 1770248338924,
-              "text": "mhgvm",
-              "sender": "me"
-            },
-            {
-              "id": 1770248339430,
-              "text": "...",
-              "sender": "me"
-            },
-            {
-              "id": 1770248340520,
-              "text": "lol",
-              "sender": "match"
-            },
-            {
-              "id": 1770248341268,
-              "text": "Hey! 👋",
-              "sender": "match"
-            },
-            {
-              "id": 1770248341667,
-              "text": "lol",
-              "sender": "match"
-            },
-            {
-              "id": 1770248342298,
-              "text": "mhgvm",
-              "sender": "me"
-            },
-            {
-              "id": 1770248342677,
-              "text": "...",
-              "sender": "me"
-            }
-          ]
-        },
-        {
-          "id": "4f011db8-a7ac-4e67-9d35-0a2953a8cfe0",
-          "name": "SCEEN 02",
-          "messages": [
-            {
-              "id": 1770248358130,
-              "text": "You matched with zven",
-              "system": true
-            },
-            {
-              "id": 1770248359719,
-              "text": "Hey! 👋",
-              "sender": "match"
-            },
-            {
-              "id": 1770248360070,
-              "text": "lol",
-              "sender": "match"
-            },
-            {
-              "id": 1770248360461,
-              "text": "mhgvm",
-              "sender": "me"
-            },
-            {
-              "id": 1770248361904,
-              "text": "...",
-              "sender": "me"
-            },
-            {
-              "id": 1770248362599,
-              "text": "wie gehts?",
-              "sender": "match"
-            },
-            {
-              "id": 1770248363383,
-              "text": "mhgvm",
-              "sender": "me"
-            }
-          ]
-        }
-      ],
-      "matchMessage": "You matched with zven 💖",
-      "status": "Online",
-      "statusColor": "#4ade80"
-    },
-    {
       "id": "cf45c249-2683-4381-a60b-c913125cce58",
       "name": "kevin",
       "avatarColor": "linear-gradient(135deg, #872956 0%, #f11674 100%)",
       "messages": [
         {
-          "id": 1770246274344,
-          "text": "You matched with New Match! 💖",
+          "id": 1770285998494,
+          "text": "You matched with kevin! 💖",
           "system": true
+        },
+        {
+          "id": 1770298864827,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1770298873736,
+          "text": "ecc",
+          "sender": "match"
+        },
+        {
+          "id": 1770298874147,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1770298874628,
+          "text": "webn5tj",
+          "sender": "me"
+        },
+        {
+          "id": 1770298875238,
+          "text": "reghtzej",
+          "sender": "me"
+        },
+        {
+          "id": 1770298875754,
+          "text": "erge",
+          "sender": "match"
+        },
+        {
+          "id": 1770298876615,
+          "text": "webn5tj",
+          "sender": "me"
+        },
+        {
+          "id": 1770298876940,
+          "text": "erge",
+          "sender": "match"
+        },
+        {
+          "id": 1770298877412,
+          "text": "reghtzej",
+          "sender": "me"
+        },
+        {
+          "id": 1770298878835,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1770298879644,
+          "text": "Hey! 👋",
+          "sender": "match"
         }
       ],
       "presets": [
@@ -212,12 +71,95 @@
           "id": "legacy-0",
           "text": "Hey! 👋",
           "sender": "match"
+        },
+        {
+          "id": "59eeaff5-d59a-4fe1-8fde-23ada071dfd3",
+          "text": "ecc",
+          "sender": "match"
+        },
+        {
+          "id": "ae8981f0-ad76-447d-9b22-ebec9345c90c",
+          "text": "webn5tj",
+          "sender": "me"
+        },
+        {
+          "id": "5d0bf3dd-ef43-4ac1-b52c-5d9a4b3c708c",
+          "text": "erge",
+          "sender": "match"
+        },
+        {
+          "id": "c0fc5f4c-2a36-4364-9389-6d4b604b91ac",
+          "text": "reghtzej",
+          "sender": "me"
         }
       ],
-      "scenarios": [],
+      "scenarios": [
+        {
+          "id": "6325b883-c9de-4ef4-a3bb-02cb8c7b79b2",
+          "name": "djn",
+          "messages": [
+            {
+              "id": 1770298864827,
+              "text": "Hey! 👋",
+              "sender": "match"
+            },
+            {
+              "id": 1770298873736,
+              "text": "ecc",
+              "sender": "match"
+            },
+            {
+              "id": 1770298874147,
+              "text": "Hey! 👋",
+              "sender": "match"
+            },
+            {
+              "id": 1770298874628,
+              "text": "webn5tj",
+              "sender": "me"
+            },
+            {
+              "id": 1770298875238,
+              "text": "reghtzej",
+              "sender": "me"
+            },
+            {
+              "id": 1770298875754,
+              "text": "erge",
+              "sender": "match"
+            },
+            {
+              "id": 1770298876615,
+              "text": "webn5tj",
+              "sender": "me"
+            },
+            {
+              "id": 1770298876940,
+              "text": "erge",
+              "sender": "match"
+            },
+            {
+              "id": 1770298877412,
+              "text": "reghtzej",
+              "sender": "me"
+            },
+            {
+              "id": 1770298878835,
+              "text": "Hey! 👋",
+              "sender": "match"
+            },
+            {
+              "id": 1770298879644,
+              "text": "Hey! 👋",
+              "sender": "match"
+            }
+          ]
+        }
+      ],
       "matchMessage": "You matched with kevin! 💖",
-      "status": "Online recently",
-      "statusColor": "gray"
+      "status": "Online",
+      "statusColor": "#4ade80",
+      "avatarImage": "/uploads/1a170eeb-99f6-48f9-869e-e4fb02bdd4ad.jpeg"
     },
     {
       "id": "61e71ef3-823e-4216-8d94-becf9b626f9e",
@@ -267,7 +209,8 @@
             }
           ]
         }
-      ]
+      ],
+      "avatarImage": null
     },
     {
       "id": "bc46a653-2ba5-4aa9-9060-82205920b6ca",
@@ -290,56 +233,131 @@
           "sender": "match"
         }
       ],
-      "scenarios": []
+      "scenarios": [],
+      "avatarImage": null
     },
     {
-      "id": "bda364a9-8916-439d-b412-c383cd38d011",
+      "id": "d6a30153-2f4f-48a7-835c-9ae1b4d672e8",
       "name": "New Match",
-      "avatarColor": "linear-gradient(135deg, #d4dffe 0%, #c09ec8 100%)",
+      "avatarColor": "linear-gradient(135deg, #d0933 0%, #620712 100%)",
       "matchMessage": "You matched with New Match! 💖",
       "status": "Online recently",
       "statusColor": "gray",
       "messages": [
         {
-          "id": 1770248658912,
+          "id": 1770285872094,
           "text": "You matched with New Match! 💖",
           "system": true
         }
       ],
       "presets": [
         {
-          "id": "850b88a1-929b-4154-9b41-74eccdb3ee9b",
+          "id": "2c7410a6-13b4-42d4-827c-f92b95b2c303",
           "text": "Hey! 👋",
           "sender": "match"
         }
       ],
-      "scenarios": []
+      "scenarios": [],
+      "avatarImage": null
     },
     {
-      "id": "344b1ef7-559e-4a42-ac02-0d7deac07289",
+      "id": "a2f4d26a-5def-4d28-a2c0-14c9b5be91b3",
       "name": "New Match",
-      "avatarColor": "linear-gradient(135deg, #1567b9 0%, #deea65 100%)",
+      "avatarColor": "linear-gradient(135deg, #77b76d 0%, #39a314 100%)",
       "matchMessage": "You matched with New Match! 💖",
       "status": "Online recently",
       "statusColor": "gray",
       "messages": [
         {
-          "id": 1770248659086,
+          "id": 1770285872483,
           "text": "You matched with New Match! 💖",
           "system": true
         }
       ],
       "presets": [
         {
-          "id": "06e0b283-4e2d-4e5c-a4cb-5e666f4b2602",
+          "id": "b8c2608a-07fc-4a80-81e4-73f953e8c8ec",
           "text": "Hey! 👋",
           "sender": "match"
         }
       ],
-      "scenarios": []
+      "scenarios": [],
+      "avatarImage": null
+    },
+    {
+      "id": "e45f2d8a-c3bd-4d60-8753-820c80098564",
+      "name": "New Match",
+      "avatarColor": "linear-gradient(135deg, #58c3fd 0%, #eac390 100%)",
+      "matchMessage": "You matched with New Match! 💖",
+      "status": "Online recently",
+      "statusColor": "gray",
+      "messages": [
+        {
+          "id": 1770285872697,
+          "text": "You matched with New Match! 💖",
+          "system": true
+        }
+      ],
+      "presets": [
+        {
+          "id": "08854aba-0d82-417d-a6ba-3353e37d2552",
+          "text": "Hey! 👋",
+          "sender": "match"
+        }
+      ],
+      "scenarios": [],
+      "avatarImage": null
+    },
+    {
+      "id": "518b3b9d-c976-45b2-9255-9e84598568aa",
+      "name": "New Match",
+      "avatarColor": "linear-gradient(135deg, #e9042b 0%, #579136 100%)",
+      "matchMessage": "You matched with New Match! 💖",
+      "status": "Online recently",
+      "statusColor": "gray",
+      "messages": [
+        {
+          "id": 1770285872894,
+          "text": "You matched with New Match! 💖",
+          "system": true
+        }
+      ],
+      "presets": [
+        {
+          "id": "0e6aa939-caf7-496c-9ce9-2f63f16d0bee",
+          "text": "Hey! 👋",
+          "sender": "match"
+        }
+      ],
+      "scenarios": [],
+      "avatarImage": null
+    },
+    {
+      "id": "3f964282-eda1-43e6-86cb-f766a4e59054",
+      "name": "New Match",
+      "avatarColor": "linear-gradient(135deg, #7b8ca3 0%, #d7bbf7 100%)",
+      "matchMessage": "You matched with New Match! 💖",
+      "status": "Online recently",
+      "statusColor": "gray",
+      "messages": [
+        {
+          "id": 1770285873092,
+          "text": "You matched with New Match! 💖",
+          "system": true
+        }
+      ],
+      "presets": [
+        {
+          "id": "c7823e1d-7b0c-4e1e-8f05-8af87f336823",
+          "text": "Hey! 👋",
+          "sender": "match"
+        }
+      ],
+      "scenarios": [],
+      "avatarImage": null
     }
   ],
-  "activeChatId": "d8806a66-e126-4408-8261-314adb8ea5d1",
+  "activeChatId": "cf45c249-2683-4381-a60b-c913125cce58",
   "statusPresets": [
     {
       "id": "sp1",
@@ -351,5 +369,6 @@
       "text": "Offline",
       "color": "gray"
     }
-  ]
+  ],
+  "actorAvatar": null
 }

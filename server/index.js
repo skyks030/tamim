@@ -5,6 +5,8 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid'); // Need to install uuid
+const multer = require('multer');
+const sharp = require('sharp');
 
 const app = express();
 app.use(cors());
@@ -12,6 +14,11 @@ app.use(express.json());
 
 // Serve static files from the client build
 app.use(express.static(path.join(__dirname, 'client_build')));
+
+// Serve Uploads
+const UPLOADS_DIR = path.join(__dirname, 'uploads');
+if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+app.use('/uploads', express.static(UPLOADS_DIR));
 
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -62,7 +69,9 @@ const INITIAL_DB = {
     { id: 'sp1', text: "Online", color: "#4ade80" }, // Green
     { id: 'sp2', text: "Online recently", color: "gray" },
     { id: 'sp3', text: "Offline", color: "gray" }
-  ]
+  ],
+  // Actor Profile (Self)
+  actorAvatar: null // URL to image or null
 };
 
 // Load DB
@@ -75,6 +84,7 @@ if (fs.existsSync(DB_FILE)) {
     if (!db.chats) db.chats = INITIAL_DB.chats;
     if (!db.activeChatId) db.activeChatId = INITIAL_DB.activeChatId;
     if (!db.statusPresets) db.statusPresets = INITIAL_DB.statusPresets; // Init Global Presets
+    if (db.actorAvatar === undefined) db.actorAvatar = null;
 
 
     // Normalize Presets, Scenarios, and Match Message
@@ -83,6 +93,7 @@ if (fs.existsSync(DB_FILE)) {
       if (!chat.matchMessage) chat.matchMessage = `You matched with ${chat.name}! 💖`; // Default
       if (!chat.status) chat.status = "Online recently";
       if (!chat.statusColor) chat.statusColor = "gray";
+      if (chat.avatarImage === undefined) chat.avatarImage = null;
 
       if (chat.presets) {
         chat.presets = chat.presets.map((p, idx) => {
@@ -117,7 +128,7 @@ io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   // Send initial state to client
-  socket.emit('init', db);
+  socket.emit('data:update', db);
 
   // --- CONTROL EVENTS ---
 
@@ -204,6 +215,75 @@ io.on('connection', (socket) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       chat.matchMessage = message;
+      saveDb();
+      io.emit('data:update', db);
+      // Do not reset chat messages, just the setting
+    }
+  });
+
+  // --- HTTP UPLOAD ENDPOINT (Progress & Resizing) ---
+  const upload = multer({ storage: multer.memoryStorage() });
+
+  app.post('/api/upload', upload.single('file'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const purpose = req.body.purpose; // 'chat' or 'actor'
+      const chatId = req.body.chatId;
+      const mimeType = req.file.mimetype;
+      const ext = mimeType.split('/')[1] || 'png';
+      const filename = `${uuidv4()}.${ext}`;
+      const filePath = path.join(UPLOADS_DIR, filename);
+
+      // Resize and Save using Sharp
+      // Maintain aspect ratio, width 128px
+      await sharp(req.file.buffer)
+        .resize(128, null, { withoutEnlargement: true })
+        .toFile(filePath);
+
+      const publicUrl = `/uploads/${filename}`;
+
+      // Update DB
+      if (purpose === 'chat' && chatId) {
+        const chat = db.chats.find(c => c.id === chatId);
+        if (chat) {
+          chat.avatarImage = publicUrl;
+          saveDb();
+          io.emit('data:update', db);
+        }
+      } else if (purpose === 'actor') {
+        db.actorAvatar = publicUrl;
+        saveDb();
+        io.emit('data:update', db);
+      }
+
+      res.json({ success: true, url: publicUrl });
+
+    } catch (err) {
+      console.error("Upload error:", err);
+      res.status(500).json({ error: "Upload failed: " + err.message });
+    }
+  });
+
+
+  /* 
+  // REMOVED SOCKET UPLOADS IN FAVOR OF HTTP POST FOR PROGRESS BAR
+  socket.on('control:upload_image', ...) 
+  */
+
+  // Clear Avatar (Reset to Gradient)
+  socket.on('control:clear_avatar', ({ purpose, chatId }) => {
+    if (purpose === 'chat' && chatId) {
+      const chat = db.chats.find(c => c.id === chatId);
+      if (chat) {
+        chat.avatarImage = null;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    } else if (purpose === 'actor') {
+      db.actorAvatar = null;
       saveDb();
       io.emit('data:update', db);
     }

@@ -9,7 +9,7 @@ export default function ActorView({ socket, data }) {
     const messagesEndRef = useRef(null);
     const touchStartRef = useRef(0); // For swipe detection
 
-    const { chats, activeChatId } = data;
+    const { chats, activeChatId, actorAvatar } = data;
     const activeChat = chats.find(c => c.id === activeChatId);
 
     // Sync view mode with activeChatId changes (if control forces switch)
@@ -112,7 +112,9 @@ export default function ActorView({ socket, data }) {
                 height: '100dvh',
                 width: '100vw',
                 overflow: 'hidden',
-                position: 'relative'
+                position: 'relative',
+                display: 'flex',       // New: Flex column
+                flexDirection: 'column'
             }}>
                 {notification && (
                     <div
@@ -123,8 +125,14 @@ export default function ActorView({ socket, data }) {
                             setNotification(null);
                         }}
                     >
-                        <div className="avatar" style={{ width: 40, height: 40, fontSize: '0.9rem', background: notification.color || 'var(--primary-gradient)' }}>
-                            {notification.title[0]}
+                        <div className="avatar" style={{
+                            width: 40, height: 40, fontSize: '0.9rem',
+                            background: (notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage)
+                                ? `url(${chats.find(c => c.id === notification.chatId).avatarImage}) center/cover no-repeat`
+                                : (notification.color || 'var(--primary-gradient)')
+                        }}>
+                            {/* Only show initial if no image */}
+                            {!(notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage) && notification.title[0]}
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
                             <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{notification.title}</h4>
@@ -144,7 +152,12 @@ export default function ActorView({ socket, data }) {
                     borderRadius: '24px', // Round all corners
                     margin: '10px 10px 0 10px' // Float
                 }}>
-                    <div className="avatar" style={{ width: 32, height: 32, fontSize: '0.8rem' }}>Me</div>
+                    <div className="avatar" style={{
+                        width: 32, height: 32, fontSize: '0.8rem',
+                        background: actorAvatar ? `url(${actorAvatar}) center/cover no-repeat` : 'var(--primary-gradient)'
+                    }}>
+                        {!actorAvatar && "Me"}
+                    </div>
                     <h2 style={{ fontSize: '1.2rem' }}>Chats</h2>
                     <MoreVertical color="white" size={20} />
                 </div>
@@ -162,53 +175,66 @@ export default function ActorView({ socket, data }) {
                     </div>
                 </div>
 
-                <div className="chat-messages" style={{ padding: 0, gap: 0 }}>
-                    {chats.map(chat => {
-                        const lastMsg = chat.messages[chat.messages.length - 1];
-                        const preview = lastMsg ? (lastMsg.system ? "New Match!" : lastMsg.text) : "No messages yet";
+                {/* Scrollable List Container */}
+                <div style={{
+                    flex: 1,
+                    overflowY: 'auto',
+                    WebkitOverflowScrolling: 'touch',
+                    position: 'relative'
+                }}>
+                    {/* Inner wrapper forcing min-height for elastic scroll */}
+                    <div className="chat-messages" style={{
+                        padding: 0,
+                        gap: 0,
+                        minHeight: 'calc(100% + 1px)' // FORCE SCROLL
+                    }}>
+                        {chats.map(chat => {
+                            const lastMsg = chat.messages[chat.messages.length - 1];
+                            const preview = lastMsg ? (lastMsg.system ? "New Match!" : lastMsg.text) : "No messages yet";
 
-                        return (
-                            <div
-                                key={chat.id}
-                                onClick={(e) => {
-                                    e.stopPropagation(); // Prevent bubbling
-                                    handleSelectChat(chat.id);
-                                }}
-                                className="fade-in-up"
-                                style={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    padding: '15px 20px',
-                                    gap: '15px',
-                                    borderBottom: '1px solid rgba(255,255,255,0.05)',
-                                    cursor: 'pointer'
-                                }}
-                            >
-                                <div className="avatar" style={{
-                                    background: chat.avatarColor || 'var(--primary-gradient)',
-                                    width: 55, height: 55
-                                }}>
-                                    {chat.name[0]}
-                                </div>
-                                <div style={{ flex: 1 }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                        <h3 style={{ margin: 0, fontSize: '1rem' }}>{chat.name}</h3>
-                                        <span style={{ fontSize: '0.75rem', color: '#666' }}>Now</span>
-                                    </div>
-                                    <div style={{
-                                        fontSize: '0.9rem',
-                                        color: 'var(--text-secondary)',
-                                        whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        maxWidth: '200px'
+                            return (
+                                <div
+                                    key={chat.id}
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Prevent bubbling
+                                        handleSelectChat(chat.id);
+                                    }}
+                                    className="fade-in-up"
+                                    style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        padding: '15px 20px',
+                                        gap: '15px',
+                                        borderBottom: '1px solid rgba(255,255,255,0.05)',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <div className="avatar" style={{
+                                        background: chat.avatarImage ? `url(${chat.avatarImage}) center/cover no-repeat` : (chat.avatarColor || 'var(--primary-gradient)'),
+                                        width: 55, height: 55
                                     }}>
-                                        {preview}
+                                        {!chat.avatarImage && chat.name[0]}
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
+                                            <h3 style={{ margin: 0, fontSize: '1rem' }}>{chat.name}</h3>
+                                            <span style={{ fontSize: '0.75rem', color: '#666' }}>Now</span>
+                                        </div>
+                                        <div style={{
+                                            fontSize: '0.9rem',
+                                            color: 'var(--text-secondary)',
+                                            whiteSpace: 'nowrap',
+                                            overflow: 'hidden',
+                                            textOverflow: 'ellipsis',
+                                            maxWidth: '200px'
+                                        }}>
+                                            {preview}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })}
+                    </div>
                 </div>
 
                 {/* Navigation Bar Mockup */}
@@ -216,7 +242,8 @@ export default function ActorView({ socket, data }) {
                     padding: '15px',
                     display: 'flex',
                     justifyContent: 'space-around',
-                    paddingBottom: 'max(15px, env(safe-area-inset-bottom))'
+                    paddingBottom: 'max(15px, env(safe-area-inset-bottom))',
+                    marginTop: 'auto' // ensure it pushes down if slightly short
                 }}>
                     <div style={{ opacity: 0.5 }}><div style={{ width: 24, height: 24, border: '2px solid white', borderRadius: 6 }}></div></div>
                     <div style={{ color: '#FF6B6B' }}><MessageCircle size={28} fill="#FF6B6B" /></div>
@@ -256,8 +283,13 @@ export default function ActorView({ socket, data }) {
                     }}
                     style={{ zIndex: 3000 }} // Ensure above everything
                 >
-                    <div className="avatar" style={{ width: 40, height: 40, fontSize: '0.9rem', background: notification.color || 'var(--primary-gradient)' }}>
-                        {notification.title[0]}
+                    <div className="avatar" style={{
+                        width: 40, height: 40, fontSize: '0.9rem',
+                        background: (notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage)
+                            ? `url(${chats.find(c => c.id === notification.chatId).avatarImage}) center/cover no-repeat`
+                            : (notification.color || 'var(--primary-gradient)')
+                    }}>
+                        {!(notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage) && notification.title[0]}
                     </div>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
                         <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{notification.title}</h4>
@@ -282,8 +314,10 @@ export default function ActorView({ socket, data }) {
                 <div onClick={handleBack} style={{ cursor: 'pointer' }}>
                     <ChevronLeft color="white" size={28} />
                 </div>
-                <div className="avatar" style={{ background: activeChat.avatarColor }}>
-                    {activeChat.name[0]}
+                <div className="avatar" style={{
+                    background: activeChat.avatarImage ? `url(${activeChat.avatarImage}) center/cover no-repeat` : activeChat.avatarColor
+                }}>
+                    {!activeChat.avatarImage && activeChat.name[0]}
                 </div>
                 <div className="header-info" style={{ flex: 1 }}>
                     <h2>{activeChat.name}</h2>
