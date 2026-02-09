@@ -85,43 +85,37 @@ const INITIAL_DB = {
     }
   ],
   activeDatingProfileId: 'd1',
-  datingAppName: 'Spark',
   datingScenarios: []
 };
 
-// Load DB
 let db = { ...INITIAL_DB };
+
+// Load from file if exists
 if (fs.existsSync(DB_FILE)) {
   try {
     const fileData = fs.readFileSync(DB_FILE, 'utf8');
-    db = JSON.parse(fileData);
-    // Merge structure updates & Normalize
-    if (!db.chats) db.chats = INITIAL_DB.chats;
-    if (!db.activeChatId) db.activeChatId = INITIAL_DB.activeChatId;
-    if (!db.statusPresets) db.statusPresets = INITIAL_DB.statusPresets; // Init Global Presets
-    if (db.actorAvatar === undefined) db.actorAvatar = null;
-    // Phase 2 Init
-    if (!db.activeApp) db.activeApp = 'messenger';
-    if (!db.datingProfiles) db.datingProfiles = INITIAL_DB.datingProfiles;
-
+    const saved = JSON.parse(fileData);
+    db = { ...INITIAL_DB, ...saved };
 
     // Normalize Presets, Scenarios, and Match Message
-    db.chats.forEach(chat => {
-      if (!chat.scenarios) chat.scenarios = [];
-      if (!chat.matchMessage) chat.matchMessage = `You matched with ${chat.name}! 💖`; // Default
-      if (!chat.status) chat.status = "Online recently";
-      if (!chat.statusColor) chat.statusColor = "gray";
-      if (chat.avatarImage === undefined) chat.avatarImage = null;
+    if (db.chats) {
+      db.chats.forEach(chat => {
+        if (!chat.scenarios) chat.scenarios = [];
+        if (!chat.matchMessage) chat.matchMessage = `You matched with ${chat.name}! 💖`; // Default
+        if (!chat.status) chat.status = "Online recently";
+        if (!chat.statusColor) chat.statusColor = "gray";
+        if (chat.avatarImage === undefined) chat.avatarImage = null;
 
-      if (chat.presets) {
-        chat.presets = chat.presets.map((p, idx) => {
-          if (typeof p === 'string') return { id: `legacy-${idx}`, text: p, sender: 'match' };
-          return p;
-        });
-      } else {
-        chat.presets = [];
-      }
-    });
+        if (chat.presets) {
+          chat.presets = chat.presets.map((p, idx) => {
+            if (typeof p === 'string') return { id: `legacy-${idx}`, text: p, sender: 'match' };
+            return p;
+          });
+        } else {
+          chat.presets = [];
+        }
+      });
+    } // Close if (db.chats)
 
   } catch (e) {
     console.error("Failed to load DB, using initial state:", e);
@@ -627,9 +621,71 @@ io.on('connection', (socket) => {
   });
 
 
+  // --- GLOBAL SCENE MANAGEMENT (New) ---
+  socket.on('control:save_global_scene', (name) => {
+    // Deep copy current DB
+    const fullState = JSON.parse(JSON.stringify(db));
+
+    // Remove the scenes list itself to prevent recursion/bloat
+    // We only want to save the ACTUAL state, not the list of other saves.
+    delete fullState.globalScenes;
+    delete fullState.activeGlobalSceneId;
+
+    const scene = {
+      id: uuidv4(),
+      name: name || `Full Backup ${new Date().toLocaleTimeString()}`,
+      data: fullState,
+      timestamp: Date.now()
+    };
+
+    if (!db.globalScenes) db.globalScenes = [];
+    db.globalScenes.push(scene);
+    db.activeGlobalSceneId = scene.id;
+
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  socket.on('control:load_global_scene', (sceneId) => {
+    const scene = db.globalScenes.find(s => s.id === sceneId);
+    if (scene) {
+      const savedScenes = db.globalScenes; // Preserve the list of scenes!
+
+      // Restore state
+      db = JSON.parse(JSON.stringify(scene.data));
+
+      // Restore the scenes list and set active ID
+      db.globalScenes = savedScenes;
+      db.activeGlobalSceneId = sceneId;
+
+      saveDb();
+      io.emit('data:update', db);
+
+      // Force clients to reload/reset state where needed
+      io.emit('actor:reset_all');
+    }
+  });
+
+  socket.on('control:rename_global_scene', ({ sceneId, name }) => {
+    const scene = db.globalScenes.find(s => s.id === sceneId);
+    if (scene) {
+      scene.name = name;
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  socket.on('control:delete_global_scene', (sceneId) => {
+    db.globalScenes = db.globalScenes.filter(s => s.id !== sceneId);
+    if (db.activeGlobalSceneId === sceneId) db.activeGlobalSceneId = null;
+    saveDb();
+    io.emit('data:update', db);
+  });
+
   socket.on('disconnect', () => {
     console.log('User disconnected:', socket.id);
   });
+
 });
 
 // --- REST API ROUTES ---

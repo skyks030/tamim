@@ -414,49 +414,7 @@ export default function MessengerControl({ socket, data }) {
                                         </div>
                                     </div>
 
-                                    {/* SCENARIOS / BACKUPS */}
-                                    <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
-                                        <h4 style={{ marginTop: 0 }}>Chat History Backups</h4>
-                                        <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
-                                            <input
-                                                className="chat-input-field"
-                                                style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
-                                                placeholder="Backup name..."
-                                                value={scenarioName}
-                                                onChange={e => setScenarioName(e.target.value)}
-                                            />
-                                            <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }} onClick={handleSaveScenario}>
-                                                <Save size={16} />
-                                            </button>
-                                        </div>
 
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '200px', overflowY: 'auto' }}>
-                                            {(selectedChat.scenarios || []).length === 0 && <span style={{ color: '#666', fontStyle: 'italic', fontSize: '0.8rem' }}>No backups yet.</span>}
-                                            {selectedChat.scenarios?.map(scenario => (
-                                                <div key={scenario.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 6 }}>
-                                                    <span style={{ fontSize: '0.9rem' }}>{scenario.name}</span>
-                                                    <div style={{ display: 'flex', gap: 5 }}>
-                                                        <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: 5 }}
-                                                            onClick={() => {
-                                                                const newName = prompt("Rename backup:", scenario.name);
-                                                                if (newName && newName.trim()) {
-                                                                    socket.emit('control:rename_scenario', { chatId: selectedChat.id, scenarioId: scenario.id, name: newName.trim() });
-                                                                }
-                                                            }}
-                                                        >
-                                                            <Edit2 size={12} />
-                                                        </button>
-                                                        <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: 5, fontSize: '0.7rem' }} onClick={() => handleLoadScenario(scenario.id)}>
-                                                            LOAD
-                                                        </button>
-                                                        <button className="control-btn danger" style={{ width: 'auto', marginBottom: 0, padding: 5 }} onClick={() => handleDeleteScenario(scenario.id)}>
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
 
                                 </div>
 

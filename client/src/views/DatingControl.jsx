@@ -445,69 +445,7 @@ export default function DatingControl({ socket, data }) {
                     </div>
                 )}
 
-                {/* SZENEN (BACKUPS) - Always visible in right column */}
-                <div className="glass" style={{ padding: '15px', borderRadius: '16px' }}>
-                    <h4 style={{ margin: '0 0 10px 0', fontSize: '0.9rem', opacity: 0.8 }}>Szenen (Backups)</h4>
 
-                    <div style={{ display: 'flex', gap: 5, marginBottom: 10 }}>
-                        <input
-                            className="chat-input-field"
-                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
-                            placeholder="Szenen Name..."
-                            value={newScenarioName}
-                            onChange={e => setNewScenarioName(e.target.value)}
-                        />
-                        <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }}
-                            onClick={() => {
-                                if (newScenarioName.trim()) {
-                                    socket.emit('control:save_dating_scenario', newScenarioName);
-                                    setNewScenarioName("");
-                                }
-                            }}
-                        >
-                            <Save size={16} />
-                        </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, maxHeight: '300px', overflowY: 'auto' }}>
-                        {(!data.datingScenarios || data.datingScenarios.length === 0) && <span style={{ color: '#666', fontStyle: 'italic', fontSize: '0.8rem' }}>Keine Szenen gespeichert.</span>}
-                        {(data.datingScenarios || []).map(scenario => (
-                            <div key={scenario.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(255,255,255,0.05)', padding: 8, borderRadius: 6 }}>
-                                <span style={{ fontSize: '0.9rem' }}>{scenario.name}</span>
-                                <div style={{ display: 'flex', gap: 5 }}>
-                                    <button className="control-btn secondary" style={{ width: 'auto', marginBottom: 0, padding: 5 }}
-                                        onClick={() => {
-                                            const newName = prompt("Neuer Name für Szene:", scenario.name);
-                                            if (newName && newName.trim()) {
-                                                socket.emit('control:rename_dating_scenario', { scenarioId: scenario.id, name: newName.trim() });
-                                            }
-                                        }}
-                                    >
-                                        <Edit2 size={12} />
-                                    </button>
-                                    <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: 5, fontSize: '0.7rem' }}
-                                        onClick={() => {
-                                            if (confirm(`Szene "${scenario.name}" laden?`)) {
-                                                socket.emit('control:load_dating_scenario', scenario.id);
-                                            }
-                                        }}
-                                    >
-                                        LOAD
-                                    </button>
-                                    <button className="control-btn danger" style={{ width: 'auto', marginBottom: 0, padding: 5 }}
-                                        onClick={() => {
-                                            if (confirm(`Szene "${scenario.name}" löschen?`)) {
-                                                socket.emit('control:delete_dating_scenario', scenario.id);
-                                            }
-                                        }}
-                                    >
-                                        <Trash2 size={12} />
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
             </div>
         </div >
     );

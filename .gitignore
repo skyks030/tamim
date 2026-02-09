@@ -1,0 +1,26 @@
+# Dependencies
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# OS Files
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Application Data (User Request)
+server/data/
+server/uploads/
+
+# Root level data/uploads (if present)
+data/
+uploads/
+
+# Build artifacts
+client/dist/
+server/client_build/
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

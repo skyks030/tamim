@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import MessengerControl from './MessengerControl';
 import DatingControl from './DatingControl';
-import { Smartphone, ChevronDown, Check } from 'lucide-react';
+import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2 } from 'lucide-react';
 
 export default function ControlView({ socket, data }) {
     // Local state for which control panel is visible
@@ -55,6 +55,111 @@ export default function ControlView({ socket, data }) {
                                 <option value="dating">Dating App</option>
                             </select>
                             <ChevronDown size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.7 }} />
+                        </div>
+
+                        {/* GLOBAL SCENE MANAGER */}
+                        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div style={{ position: 'relative' }}>
+                                <select
+                                    value={data.activeGlobalSceneId || ""}
+                                    onChange={(e) => {
+                                        const val = e.target.value;
+                                        if (val) {
+                                            if (confirm("Load this scene? Current unsaved changes will be lost.")) {
+                                                socket.emit('control:load_global_scene', val);
+                                            }
+                                        }
+                                    }}
+                                    style={{
+                                        appearance: 'none',
+                                        padding: '0 30px 0 12px', // Reduce vertical padding, rely on height/flex
+                                        borderRadius: '8px',
+                                        background: 'rgba(255,255,255,0.1)',
+                                        color: 'white',
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                        fontSize: '0.9rem',
+                                        width: 180,
+                                        cursor: 'pointer',
+                                        height: '36px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        boxSizing: 'border-box',
+                                        margin: 0
+                                    }}
+                                >
+                                    <option value="" disabled>Load Scene...</option>
+                                    {(data.globalScenes || []).map(s => (
+                                        <option key={s.id} value={s.id}>
+                                            {s.name}
+                                        </option>
+                                    ))}
+                                </select>
+                                <ChevronDown size={14} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.7 }} />
+                            </div>
+
+                            <button className="control-btn secondary"
+                                style={{
+                                    width: 'auto',
+                                    padding: '0 10px',
+                                    height: '36px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    margin: 0,
+                                    boxSizing: 'border-box'
+                                }}
+                                title="Save Current Scene"
+                                onClick={() => {
+                                    const name = prompt("Name for new scene:", `Scene ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
+                                    if (name) socket.emit('control:save_global_scene', name);
+                                }}
+                            >
+                                <Save size={16} />
+                            </button>
+
+                            {/* Actions for Active Scene if selected */}
+                            {data.activeGlobalSceneId && (
+                                <>
+                                    <button className="control-btn secondary" style={{
+                                        width: 'auto',
+                                        padding: '0 10px',
+                                        height: '36px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: 0,
+                                        boxSizing: 'border-box'
+                                    }} title="Rename Current Scene"
+                                        onClick={() => {
+                                            const s = data.globalScenes?.find(x => x.id === data.activeGlobalSceneId);
+                                            if (s) {
+                                                const newName = prompt("Rename scene:", s.name);
+                                                if (newName) socket.emit('control:rename_global_scene', { sceneId: s.id, name: newName });
+                                            }
+                                        }}
+                                    >
+                                        <Edit2 size={16} />
+                                    </button>
+                                    <button className="control-btn danger" style={{
+                                        width: 'auto',
+                                        padding: '0 10px',
+                                        height: '36px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: 0,
+                                        boxSizing: 'border-box'
+                                    }} title="Delete Current Scene"
+                                        onClick={() => {
+                                            if (confirm("Delete this scene?")) {
+                                                socket.emit('control:delete_global_scene', data.activeGlobalSceneId);
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 size={16} />
+                                    </button>
+                                </>
+                            )}
                         </div>
 
                         {/* Connection Status */}
