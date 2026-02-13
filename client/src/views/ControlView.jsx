@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import MessengerControl from './MessengerControl';
 import DatingControl from './DatingControl';
-import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2 } from 'lucide-react';
+import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2, RotateCcw } from 'lucide-react';
 
 export default function ControlView({ socket, data }) {
     // Local state for which control panel is visible
@@ -14,13 +14,7 @@ export default function ControlView({ socket, data }) {
         localStorage.setItem('control_current_tab', currentTab);
     }, [currentTab]);
 
-    const { activeApp } = data;
 
-    const handleSwitchPhoneApp = () => {
-        socket.emit('control:switch_app', currentTab);
-    };
-
-    const isLive = activeApp === currentTab;
 
     return (
         <div style={{ height: '100%', overflowY: 'auto', WebkitOverflowScrolling: 'touch', padding: '20px' }}>
@@ -129,6 +123,24 @@ export default function ControlView({ socket, data }) {
                                         justifyContent: 'center',
                                         margin: 0,
                                         boxSizing: 'border-box'
+                                    }} title="Reset Scene to Saved State"
+                                        onClick={() => {
+                                            if (confirm("Reset scene to saved state? Unsaved changes will be lost.")) {
+                                                socket.emit('control:load_global_scene', data.activeGlobalSceneId);
+                                            }
+                                        }}
+                                    >
+                                        <RotateCcw size={16} />
+                                    </button>
+                                    <button className="control-btn secondary" style={{
+                                        width: 'auto',
+                                        padding: '0 10px',
+                                        height: '36px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        margin: 0,
+                                        boxSizing: 'border-box'
                                     }} title="Rename Current Scene"
                                         onClick={() => {
                                             const s = data.globalScenes?.find(x => x.id === data.activeGlobalSceneId);
@@ -174,40 +186,7 @@ export default function ControlView({ socket, data }) {
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 15 }}>
-                        {/* Go Live Button */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                            <span style={{ fontSize: '0.8rem', color: '#aaa' }}>Phone: <strong style={{ color: 'white' }}>{activeApp === 'dating' ? 'Tinder' : 'Messenger'}</strong></span>
 
-                            <button
-                                className={`control-btn ${isLive ? 'success' : 'primary'}`}
-                                style={{
-                                    marginBottom: 0,
-                                    width: 'auto',
-                                    padding: '8px 20px',
-                                    fontSize: '0.9rem',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: 8,
-                                    opacity: isLive ? 1 : 1,
-                                    background: isLive ? '#22c55e' : undefined, // Explicit Green when live if not covered by class
-                                    border: isLive ? '1px solid #22c55e' : undefined
-                                }}
-                                onClick={handleSwitchPhoneApp}
-                                disabled={isLive}
-                            >
-                                {isLive ? (
-                                    <>
-                                        <Check size={16} /> Live on Phone
-                                    </>
-                                ) : (
-                                    <>
-                                        <Smartphone size={16} /> Go Live
-                                    </>
-                                )}
-                            </button>
-                        </div>
-                    </div>
                 </div>
 
                 {/* CONTENT AREA */}

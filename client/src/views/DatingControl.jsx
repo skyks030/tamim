@@ -144,6 +144,7 @@ export default function DatingControl({ socket, data }) {
     const handleSetActive = (id, e) => {
         e.stopPropagation();
         socket.emit('control:set_active_dating_profile', id);
+        socket.emit('control:switch_app', 'dating');
     };
 
     const moveProfile = (index, direction, e) => {
@@ -214,7 +215,7 @@ export default function DatingControl({ socket, data }) {
                 {/* THEME EDITOR */}
                 <div style={{ marginBottom: 20, paddingBottom: 15, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'linear-gradient(45deg, #FF4B6E, #FF8E53)' }}></div>
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: `linear-gradient(45deg, ${data.datingTheme?.primary || '#FF4B6E'}, ${data.datingTheme?.background || '#000'})` }}></div>
                         <span style={{ fontSize: '0.8rem', opacity: 0.5, textTransform: 'uppercase' }}>Theme Colors</span>
                     </div>
                     <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>

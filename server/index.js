@@ -237,9 +237,36 @@ io.on('connection', (socket) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       chat.matchMessage = message;
+
+      // Update the actual system message if it exists
+      const systemMsg = chat.messages.find(m => m.system);
+      if (systemMsg) {
+        systemMsg.text = message;
+      }
+
       saveDb();
       io.emit('data:update', db);
-      // Do not reset chat messages, just the setting
+    }
+  });
+
+  // Toggle Dissolved State
+  socket.on('control:toggle_dissolve', (chatId) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat) {
+      chat.dissolved = !chat.dissolved;
+      if (!chat.dissolutionMessage) chat.dissolutionMessage = "This match has been dissolved.";
+      saveDb();
+      io.emit('data:update', db);
+    }
+  });
+
+  // Update Dissolution Message
+  socket.on('control:update_dissolution_message', ({ chatId, message }) => {
+    const chat = db.chats.find(c => c.id === chatId);
+    if (chat) {
+      chat.dissolutionMessage = message;
+      saveDb();
+      io.emit('data:update', db);
     }
   });
 

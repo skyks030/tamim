@@ -157,7 +157,7 @@ export default function DatingView({ data, socket }) {
 
             {/* Header */}
             <div style={{ padding: 20, textAlign: 'center', zIndex: 10 }}>
-                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', background: 'linear-gradient(to right, #fd297b, #ff655b)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: theme.primary }}>
                     {datingAppName || 'Spark'}
                 </span>
             </div>

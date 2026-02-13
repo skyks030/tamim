@@ -149,31 +149,38 @@ export default function ActorView({ socket, data }) {
                     </div>
                 )}
 
-                <div className="chat-header glass" style={{
+                <div style={{ // REMOVED glass
                     justifyContent: 'space-between',
                     height: '60px',
                     borderRadius: '24px', // Round all corners
-                    margin: '10px 10px 0 10px' // Float
+                    margin: '10px 10px 0 10px', // Float
+                    backgroundColor: theme.primary,
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: '0 15px',
+                    color: 'white'
                 }}>
                     <div className="avatar" style={{
                         width: 32, height: 32, fontSize: '0.8rem',
-                        background: actorAvatar ? `url(${actorAvatar}) center/cover no-repeat` : `linear-gradient(45deg, ${theme.primary}, #888)`
+                        background: actorAvatar ? `url(${actorAvatar}) center/cover no-repeat` : 'rgba(255,255,255,0.2)',
+                        color: 'white'
                     }}>
                         {!actorAvatar && "Me"}
                     </div>
-                    <h2 style={{ fontSize: '1.2rem' }}>Chats</h2>
+                    <h2 style={{ fontSize: '1.2rem', color: 'white' }}>Chats</h2>
                     <MoreVertical color="white" size={20} />
                 </div>
 
                 <div style={{ padding: '15px' }}>
-                    <div className="glass" style={{
+                    <div style={{
                         padding: '10px',
                         display: 'flex',
                         alignItems: 'center',
                         borderRadius: '12px',
-                        color: 'var(--text-secondary)'
+                        color: 'white',
+                        backgroundColor: theme.primary
                     }}>
-                        <Search size={18} style={{ marginRight: 10 }} />
+                        <Search size={18} style={{ marginRight: 10, color: 'white' }} />
                         <span>Search matches...</span>
                     </div>
                 </div>
@@ -241,15 +248,16 @@ export default function ActorView({ socket, data }) {
                 </div>
 
                 {/* Navigation Bar Mockup */}
-                <div className="glass" style={{
+                <div style={{
                     padding: '15px',
                     display: 'flex',
                     justifyContent: 'space-around',
                     paddingBottom: 'max(15px, env(safe-area-inset-bottom))',
-                    marginTop: 'auto' // ensure it pushes down if slightly short
+                    marginTop: 'auto',
+                    backgroundColor: theme.primary
                 }}>
                     <div style={{ opacity: 0.5 }}><div style={{ width: 24, height: 24, border: '2px solid white', borderRadius: 6 }}></div></div>
-                    <div style={{ color: '#FF6B6B' }}><MessageCircle size={28} fill="#FF6B6B" /></div>
+                    <div style={{ color: 'white' }}><MessageCircle size={28} fill="white" /></div>
                     <div style={{ opacity: 0.5 }}><div style={{ width: 24, height: 24, border: '2px solid white', borderRadius: '50%' }}></div></div>
                 </div>
             </div>
@@ -309,12 +317,19 @@ export default function ActorView({ socket, data }) {
             )}
 
             {/* Header (Fixed at Top) */}
-            <div className="chat-header glass" style={{
+            <div style={{ // REMOVED glass
                 zIndex: 200,
                 position: 'relative',
                 borderRadius: '24px', // Round all corners as requested
                 margin: '10px 10px 0 10px', // Float
-                borderBottom: '1px solid var(--glass-border)'
+                // borderBottom: '1px solid var(--glass-border)', // No border needed if solid color
+                backgroundColor: theme.primary,
+                display: 'flex',
+                alignItems: 'center',
+                padding: '10px 15px',
+                gap: '15px',
+                color: 'white',
+                height: '60px' // Force height to match others
             }}>
                 <div onClick={handleBack} style={{ cursor: 'pointer' }}>
                     <ChevronLeft color="white" size={28} />
@@ -325,8 +340,8 @@ export default function ActorView({ socket, data }) {
                     {!activeChat.avatarImage && activeChat.name[0]}
                 </div>
                 <div className="header-info" style={{ flex: 1 }}>
-                    <h2>{activeChat.name}</h2>
-                    <span style={{ color: activeChat.statusColor || 'gray' }}>{activeChat.status || "Online recently"}</span>
+                    <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white' }}>{activeChat.name}</h2>
+                    <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>{activeChat.status || "Online recently"}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '15px' }}>
                     <Phone size={20} color="white" />
@@ -449,7 +464,7 @@ export default function ActorView({ socket, data }) {
 
                     {/* Input Area (Flow, attached to keyboard) */}
                     <div
-                        className="glass chat-input-area"
+                        className="chat-input-area" // REMOVED glass
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsKeyboardVisible(true);
@@ -459,7 +474,7 @@ export default function ActorView({ socket, data }) {
                             flexShrink: 0,
                             zIndex: 10,
 
-                            borderTop: '1px solid rgba(255,255,255,0.1)',
+                            // borderTop: '1px solid rgba(255,255,255,0.1)',
                             paddingBottom: '10px',
                             width: 'calc(100% - 20px)', // Reduce width for float
                             margin: '0 10px 30px 10px', // Lift input up (30px bottom)
@@ -467,7 +482,9 @@ export default function ActorView({ socket, data }) {
                             display: 'flex',
                             alignItems: 'center',
                             paddingLeft: '15px',
-                            paddingRight: '15px'
+                            paddingRight: '15px',
+                            backgroundColor: theme.primary,
+                            paddingTop: '10px' // Add padding top since we removed class
                         }}
                     >
                         <div
@@ -498,7 +515,7 @@ export default function ActorView({ socket, data }) {
                                 width: '40px',
                                 height: '40px',
                                 borderRadius: '50%',
-                                background: 'var(--message-me-bg)',
+                                background: 'white',
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
@@ -509,7 +526,7 @@ export default function ActorView({ socket, data }) {
                                 flexShrink: 0
                             }}
                         >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                                 <line x1="22" y1="2" x2="11" y2="13"></line>
                                 <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
                             </svg>
@@ -535,12 +552,60 @@ export default function ActorView({ socket, data }) {
                 </div>
             </div>
 
+            {/* MATCH DISSOLUTION OVERLAY */}
+            {activeChat.dissolved && (
+                <div className="fade-in-up" style={{
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '100%',
+                    height: '100%',
+                    zIndex: 9999,
+                    backgroundColor: theme.primary ? `${theme.primary}CC` : 'rgba(0,0,0,0.85)', // 80% opacity primary or dark
+                    backdropFilter: 'blur(5px)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    textAlign: 'center',
+                    color: 'white',
+                    padding: 40
+                }}>
+                    <img
+                        src="/wilted_rose.png"
+                        alt="Match Dissolved"
+                        style={{
+                            width: '150px',
+                            marginBottom: '30px',
+                            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+                        }}
+                    />
+                    <h2 style={{
+                        fontSize: '2rem',
+                        fontWeight: 'bold',
+                        margin: 0,
+                        textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                    }}>
+                        {activeChat.dissolutionMessage || "Match aufgelöst"}
+                    </h2>
+                </div>
+            )}
+
             <style>{`
-          .message.actor {
-              background-color: ${theme.primary} !important;
-              color: white;
+          .message {
+              background-color: ${theme.incoming || '#222222'};
+              color: ${theme.messageText || 'white'};
+          }
+          .message.match {
+              background-color: ${theme.incoming || '#222222'} !important;
+              color: ${theme.messageText || 'white'} !important;
+          }
+          .message.me {
+              background-color: ${theme.outgoing || theme.primary} !important;
+              color: ${theme.messageText || 'white'} !important;
               align-self: flex-end;
               border-bottom-right-radius: 4px;
+              box-shadow: none !important;
           }
           @keyframes blink { 
               0%, 100% { opacity: 1; }
@@ -550,11 +615,18 @@ export default function ActorView({ socket, data }) {
               display: inline-block;
               width: 2px;
               height: 1.2rem;
-              background: ${theme.primary};
+              background: white;
               margin-left: 2px;
               animation: blink 1s infinite;
           }
           
+          .typing-indicator {
+              background-color: ${theme.incoming || '#222222'} !important;
+          }
+          .typing-indicator .dot {
+              background-color: ${theme.messageText || 'var(--text-secondary)'} !important;
+          }
+
           .page-transition {
               flex: 1;
               display: flex;

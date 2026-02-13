@@ -31,16 +31,17 @@ export default function MessengerControl({ socket, data }) {
 
     const handleSelectActive = (chatId) => {
         socket.emit('control:select_chat', chatId);
+        socket.emit('control:switch_app', 'messenger');
     };
 
     const handleUpdateName = (newName) => {
-        if (selectedChat && newName.trim()) {
+        if (selectedChat) {
             socket.emit('control:update_chat', { chatId: selectedChat.id, name: newName });
         }
     };
 
     const handleUpdateMatchMessage = (newMessage) => {
-        if (selectedChat && newMessage.trim()) {
+        if (selectedChat) {
             socket.emit('control:update_match_message', { chatId: selectedChat.id, message: newMessage });
         }
     };
@@ -181,104 +182,143 @@ export default function MessengerControl({ socket, data }) {
             )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
 
-                {/* --- THEME EDITOR --- */}
-                <div className="control-panel">
-                    <h3>Messenger Theme</h3>
-                    <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <label style={{ fontSize: '0.8rem', color: '#888' }}>Primary Color</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <input
-                                    type="color"
-                                    value={data.messengerTheme?.primary || "#007AFF"}
-                                    onChange={(e) => socket.emit('control:update_messenger_theme', { primary: e.target.value })}
-                                    style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
-                                />
-                                <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.primary}</span>
-                            </div>
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <label style={{ fontSize: '0.8rem', color: '#888' }}>Background</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                <input
-                                    type="color"
-                                    value={data.messengerTheme?.background || "#000000"}
-                                    onChange={(e) => socket.emit('control:update_messenger_theme', { background: e.target.value })}
-                                    style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
-                                />
-                                <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.background}</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* SIDEBAR: CHAT LIST */}
-                <div className="glass" style={{ padding: '15px', borderRadius: '16px', height: 'fit-content' }}>
-                    <h3 style={{ marginTop: 0 }}>Chats</h3>
-
-                    <div style={{ display: 'flex', gap: 5, marginBottom: 15 }}>
-                        <input
-                            className="chat-input-field"
-                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
-                            placeholder="New person name..."
-                            value={newChatName}
-                            onChange={e => setNewChatName(e.target.value)}
-                        />
-                        <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }} onClick={handleCreateChat}>
-                            <Plus size={18} />
-                        </button>
-                    </div>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                        {chats.map(chat => (
-                            <div
-                                key={chat.id}
-                                onClick={() => setSelectedChatId(chat.id)}
-                                style={{
-                                    padding: '10px',
-                                    background: selectedChatId === chat.id ? 'rgba(255,255,255,0.1)' : 'transparent',
-                                    borderRadius: '8px',
-                                    cursor: 'pointer',
-                                    border: '1px solid transparent',
-                                    borderColor: selectedChatId === chat.id ? 'var(--glass-border)' : 'transparent',
-                                    display: 'flex',
-                                    justifyContent: 'space-between',
-                                    alignItems: 'center'
-                                }}
-                            >
+                    <div className="control-panel">
+                        <h3>Messenger Theme</h3>
+                        <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <label style={{ fontSize: '0.8rem', color: '#888' }}>Primary Color</label>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                                    <div className="avatar" style={{
-                                        width: 24, height: 24, fontSize: '0.7rem',
-                                        background: chat.avatarImage ? `url(${chat.avatarImage}) center/cover no-repeat` : chat.avatarColor
-                                    }}>
-                                        {!chat.avatarImage && chat.name[0]}
-                                    </div>
-                                    <span>{chat.name}</span>
-                                </div>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                                    {activeChatId === chat.id && <span style={{ fontSize: '0.7rem', color: '#10b981' }}>ACTIVE</span>}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
-                                        style={{
-                                            background: 'transparent',
-                                            border: 'none',
-                                            color: '#666',
-                                            cursor: 'pointer',
-                                            padding: 4,
-                                            opacity: 0.6
-                                        }}
-                                        className="hover-danger"
-                                    >
-                                        <Trash2 size={14} />
-                                    </button>
+                                    <input
+                                        type="color"
+                                        value={data.messengerTheme?.primary || "#007AFF"}
+                                        onChange={(e) => socket.emit('control:update_messenger_theme', { primary: e.target.value })}
+                                        style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.primary}</span>
                                 </div>
                             </div>
-                        ))}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <label style={{ fontSize: '0.8rem', color: '#888' }}>Background</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <input
+                                        type="color"
+                                        value={data.messengerTheme?.background || "#000000"}
+                                        onChange={(e) => socket.emit('control:update_messenger_theme', { background: e.target.value })}
+                                        style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.background}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <label style={{ fontSize: '0.8rem', color: '#888' }}>Outgoing Msg</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <input
+                                        type="color"
+                                        value={data.messengerTheme?.outgoing || data.messengerTheme?.primary || "#007AFF"}
+                                        onChange={(e) => socket.emit('control:update_messenger_theme', { outgoing: e.target.value })}
+                                        style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.outgoing || 'Default'}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <label style={{ fontSize: '0.8rem', color: '#888' }}>Incoming Msg</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <input
+                                        type="color"
+                                        value={data.messengerTheme?.incoming || "#222222"}
+                                        onChange={(e) => socket.emit('control:update_messenger_theme', { incoming: e.target.value })}
+                                        style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.incoming || 'Default'}</span>
+                                </div>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <label style={{ fontSize: '0.8rem', color: '#888' }}>Text Color</label>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                    <input
+                                        type="color"
+                                        value={data.messengerTheme?.messageText || "#FFFFFF"}
+                                        onChange={(e) => socket.emit('control:update_messenger_theme', { messageText: e.target.value })}
+                                        style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                    />
+                                    <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.messageText || 'Default'}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* SIDEBAR: CHAT LIST */}
+                    <div className="glass" style={{ padding: '15px', borderRadius: '16px', height: 'fit-content' }}>
+                        <h3 style={{ marginTop: 0 }}>Chats</h3>
+
+                        <div style={{ display: 'flex', gap: 5, marginBottom: 15 }}>
+                            <input
+                                className="chat-input-field"
+                                style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
+                                placeholder="New person name..."
+                                value={newChatName}
+                                onChange={e => setNewChatName(e.target.value)}
+                            />
+                            <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: '0 10px' }} onClick={handleCreateChat}>
+                                <Plus size={18} />
+                            </button>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                            {chats.map(chat => (
+                                <div
+                                    key={chat.id}
+                                    onClick={() => setSelectedChatId(chat.id)}
+                                    style={{
+                                        padding: '10px',
+                                        background: selectedChatId === chat.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        border: '1px solid transparent',
+                                        borderColor: selectedChatId === chat.id ? 'var(--glass-border)' : 'transparent',
+                                        display: 'flex',
+                                        justifyContent: 'space-between',
+                                        alignItems: 'center'
+                                    }}
+                                >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                        <div className="avatar" style={{
+                                            width: 24, height: 24, fontSize: '0.7rem',
+                                            background: chat.avatarImage ? `url(${chat.avatarImage}) center/cover no-repeat` : chat.avatarColor
+                                        }}>
+                                            {!chat.avatarImage && chat.name[0]}
+                                        </div>
+                                        <span>{chat.name}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
+                                        {activeChatId === chat.id && <span style={{ fontSize: '0.7rem', color: '#10b981' }}>ACTIVE</span>}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat.id); }}
+                                            style={{
+                                                background: 'transparent',
+                                                border: 'none',
+                                                color: '#666',
+                                                cursor: 'pointer',
+                                                padding: 4,
+                                                opacity: 0.6
+                                            }}
+                                            className="hover-danger"
+                                        >
+                                            <Trash2 size={14} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 </div>
-
 
                 {/* MAIN: SELECTED CHAT CONTROLS */}
                 <div className="glass" style={{ padding: '20px', borderRadius: '16px' }}>
@@ -327,13 +367,42 @@ export default function MessengerControl({ socket, data }) {
                                         </div>
                                     </div>
 
+                                    {/* DISSOLVE MATCH CONTROL */}
+                                    <div style={{ padding: 10, background: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginBottom: 15, border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#fda4af', fontWeight: 'bold' }}>MATCH DISSOLUTION</span>
+                                            <button
+                                                className="control-btn"
+                                                onClick={() => socket.emit('control:toggle_dissolve', selectedChat.id)}
+                                                style={{
+                                                    width: 'auto', padding: '4px 8px', fontSize: '0.8rem', marginBottom: 0,
+                                                    background: selectedChat.dissolved ? '#10b981' : '#ef4444',
+                                                    borderColor: 'transparent'
+                                                }}
+                                            >
+                                                {selectedChat.dissolved ? "RESTORE CHAT" : "DISSOLVE CHAT"}
+                                            </button>
+                                        </div>
+                                        {selectedChat.dissolved && (
+                                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#fda4af', width: 60 }}>Message:</span>
+                                                <input
+                                                    value={selectedChat.dissolutionMessage || ""}
+                                                    onChange={e => socket.emit('control:update_dissolution_message', { chatId: selectedChat.id, message: e.target.value })}
+                                                    placeholder="This match has been dissolved."
+                                                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #ef4444', color: 'white', padding: 5, borderRadius: 4, fontSize: '0.9rem', flex: 1 }}
+                                                />
+                                            </div>
+                                        )}
+                                    </div>
+
                                     <button
-                                        className={`control-btn ${activeChatId === selectedChat.id ? 'primary' : ''}`}
+                                        className={`control-btn ${activeChatId === selectedChat.id && data.activeApp === 'messenger' ? 'primary' : 'success'}`}
                                         style={{ width: 'auto', marginBottom: 0, height: 'fit-content' }}
                                         onClick={() => handleSelectActive(selectedChat.id)}
-                                        disabled={activeChatId === selectedChat.id}
+                                        disabled={activeChatId === selectedChat.id && data.activeApp === 'messenger'}
                                     >
-                                        {activeChatId === selectedChat.id ? 'Active on Screen' : 'Set Active'}
+                                        {activeChatId === selectedChat.id && data.activeApp === 'messenger' ? 'Active on Screen' : 'Show on Screen'}
                                     </button>
 
                                 </div>
