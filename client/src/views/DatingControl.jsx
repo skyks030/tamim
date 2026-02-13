@@ -211,6 +211,38 @@ export default function DatingControl({ socket, data }) {
                     </div>
                 </div>
 
+                {/* THEME EDITOR */}
+                <div style={{ marginBottom: 20, paddingBottom: 15, borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
+                        <div style={{ width: 14, height: 14, borderRadius: '50%', background: 'linear-gradient(45deg, #FF4B6E, #FF8E53)' }}></div>
+                        <span style={{ fontSize: '0.8rem', opacity: 0.5, textTransform: 'uppercase' }}>Theme Colors</span>
+                    </div>
+                    <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <label style={{ fontSize: '0.7rem', color: '#888' }}>Primary</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <input
+                                    type="color"
+                                    value={data.datingTheme?.primary || "#FF4B6E"}
+                                    onChange={(e) => socket.emit('control:update_dating_theme', { primary: e.target.value })}
+                                    style={{ border: 'none', width: 30, height: 30, cursor: 'pointer', background: 'none', padding: 0 }}
+                                />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <label style={{ fontSize: '0.7rem', color: '#888' }}>Background</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <input
+                                    type="color"
+                                    value={data.datingTheme?.background || "#111111"}
+                                    onChange={(e) => socket.emit('control:update_dating_theme', { background: e.target.value })}
+                                    style={{ border: 'none', width: 30, height: 30, cursor: 'pointer', background: 'none', padding: 0 }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
                     <h3 style={{ margin: 0 }}>Profiles</h3>
                     <button className="control-btn primary" style={{ width: 'auto', marginBottom: 0, padding: '5px 10px' }} onClick={() => setIsCreating(true)}>
@@ -444,8 +476,6 @@ export default function DatingControl({ socket, data }) {
                         </button>
                     </div>
                 )}
-
-
             </div>
         </div >
     );

@@ -85,7 +85,17 @@ const INITIAL_DB = {
     }
   ],
   activeDatingProfileId: 'd1',
-  datingScenarios: []
+  datingScenarios: [],
+  datingTheme: {
+    primary: "#FF4B6E",
+    background: "#111111",
+    text: "#FFFFFF"
+  },
+  messengerTheme: {
+    primary: "#007AFF", // Default Blue
+    background: "#000000",
+    text: "#FFFFFF"
+  }
 };
 
 let db = { ...INITIAL_DB };
@@ -618,6 +628,20 @@ io.on('connection', (socket) => {
         io.emit('data:update', db);
       }
     }
+  });
+
+  // Update Dating Theme
+  socket.on('control:update_dating_theme', (theme) => {
+    db.datingTheme = { ...db.datingTheme, ...theme };
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update Messenger Theme
+  socket.on('control:update_messenger_theme', (theme) => {
+    db.messengerTheme = { ...db.messengerTheme, ...theme };
+    saveDb();
+    io.emit('data:update', db);
   });
 
 

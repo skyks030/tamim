@@ -3,6 +3,7 @@ import { Heart, X, Info } from 'lucide-react';
 
 export default function DatingView({ data, socket }) {
     const { datingProfiles, activeDatingProfileId, datingAppName } = data;
+    const theme = data.datingTheme || { primary: "#FF4B6E", background: "#111111", text: "#FFFFFF" };
 
     // Find current index based on active ID
     const currentIndex = datingProfiles.findIndex(p => p.id === activeDatingProfileId);
@@ -129,7 +130,8 @@ export default function DatingView({ data, socket }) {
     return (
         <div style={{
             height: '100%',
-            background: '#111',
+            background: theme.background,
+            color: theme.text,
             position: 'relative',
             overflow: 'hidden',
             display: 'flex',
@@ -238,8 +240,8 @@ export default function DatingView({ data, socket }) {
                     onClick={() => handleSwipeTrigger('left')}
                     style={{
                         width: 60, height: 60, borderRadius: '50%',
-                        background: 'transparent', border: '2px solid #ff4b4b',
-                        color: '#ff4b4b', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'transparent', border: `2px solid ${theme.primary}`,
+                        color: theme.primary, display: 'flex', alignItems: 'center', justifyContent: 'center',
                         boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
                         cursor: 'pointer',
                         transform: 'scale(1)',
@@ -266,42 +268,39 @@ export default function DatingView({ data, socket }) {
                 <button
                     onClick={() => handleSwipeTrigger('right')}
                     style={{
-                        width: 60, height: 60, borderRadius: '50%',
-                        background: 'transparent', border: '2px solid #2df998',
-                        color: '#2df998', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        boxShadow: '0 5px 15px rgba(0,0,0,0.2)',
+                        width: 60, height: 60,
+                        borderRadius: '50%',
+                        background: theme.primary,
+                        border: 'none',
+                        color: 'white',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         cursor: 'pointer',
-                        transform: 'scale(1)',
-                        transition: 'transform 0.1s'
+                        boxShadow: `0 5px 20px ${theme.primary}66` // 40% Alpha transparency
                     }}
-                    onMouseDown={e => e.currentTarget.style.transform = 'scale(0.9)'}
-                    onMouseUp={e => e.currentTarget.style.transform = 'scale(1)'}
                 >
-                    <Heart size={30} fill="#2df998" />
+                    <Heart size={30} fill="white" />
                 </button>
             </div>
 
             {/* MATCH OVERLAY */}
             {showMatch && (
                 <div style={{
-                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                    background: '#10b981', // Green background as requested
+                    position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
+                    background: 'rgba(0,0,0,0.85)',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 100,
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    animation: 'fadeInData 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards', // Slower, smoother entry
-                    opacity: 0
+                    animation: 'fadeIn 0.3s'
                 }}>
-                    <div style={{
-                        fontSize: '3rem', fontWeight: '900', color: 'white',
-                        fontStyle: 'italic',
-                        textShadow: '0 5px 15px rgba(0,0,0,0.2)',
-                        marginBottom: 40,
-                        transform: 'scale(1.2)',
+                    <h1 style={{
+                        fontSize: '3rem', fontStyle: 'italic',
+                        background: `linear-gradient(45deg, ${theme.primary}, #FF8E53)`,
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        marginBottom: 20,
                         animation: 'pulseHeart 2s infinite ease-in-out'
                     }}>
-                        IT'S A MATCH!
-                    </div>
+                        It's a Match!
+                    </h1>
                     <div style={{ display: 'flex', gap: 30, alignItems: 'center' }}>
                         <div style={{
                             width: 100, height: 100, borderRadius: '50%',

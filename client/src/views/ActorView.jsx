@@ -10,6 +10,7 @@ export default function ActorView({ socket, data }) {
     const touchStartRef = useRef(0); // For swipe detection
 
     const { chats, activeChatId, actorAvatar } = data;
+    const theme = data.messengerTheme || { primary: "#007AFF", background: "#000000", text: "#FFFFFF" };
     const activeChat = chats.find(c => c.id === activeChatId);
 
     // Sync view mode with activeChatId changes (if control forces switch)
@@ -114,7 +115,9 @@ export default function ActorView({ socket, data }) {
                 overflow: 'hidden',
                 position: 'relative',
                 display: 'flex',       // New: Flex column
-                flexDirection: 'column'
+                flexDirection: 'column',
+                background: theme.background,
+                color: theme.text
             }}>
                 {notification && (
                     <div
@@ -154,7 +157,7 @@ export default function ActorView({ socket, data }) {
                 }}>
                     <div className="avatar" style={{
                         width: 32, height: 32, fontSize: '0.8rem',
-                        background: actorAvatar ? `url(${actorAvatar}) center/cover no-repeat` : 'var(--primary-gradient)'
+                        background: actorAvatar ? `url(${actorAvatar}) center/cover no-repeat` : `linear-gradient(45deg, ${theme.primary}, #888)`
                     }}>
                         {!actorAvatar && "Me"}
                     </div>
@@ -266,7 +269,9 @@ export default function ActorView({ socket, data }) {
             height: '100dvh',
             width: '100vw',
             overflow: 'hidden',
-            position: 'relative' // Ensure relative context
+            position: 'relative', // Ensure relative context
+            background: theme.background,
+            color: theme.text
         }}>
             {/* Notifications (Absolute Top) */}
             {notification && (
@@ -531,6 +536,12 @@ export default function ActorView({ socket, data }) {
             </div>
 
             <style>{`
+          .message.actor {
+              background-color: ${theme.primary} !important;
+              color: white;
+              align-self: flex-end;
+              border-bottom-right-radius: 4px;
+          }
           @keyframes blink { 
               0%, 100% { opacity: 1; }
               50% { opacity: 0; }
@@ -539,7 +550,7 @@ export default function ActorView({ socket, data }) {
               display: inline-block;
               width: 2px;
               height: 1.2rem;
-              background: #007AFF;
+              background: ${theme.primary};
               margin-left: 2px;
               animation: blink 1s infinite;
           }
@@ -557,6 +568,6 @@ export default function ActorView({ socket, data }) {
               to { opacity: 1; }
           }
       `}</style>
-        </div>
+        </div >
     );
 }

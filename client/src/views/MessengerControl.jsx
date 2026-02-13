@@ -182,6 +182,38 @@ export default function MessengerControl({ socket, data }) {
 
             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '20px' }}>
 
+                {/* --- THEME EDITOR --- */}
+                <div className="control-panel">
+                    <h3>Messenger Theme</h3>
+                    <div style={{ display: 'flex', gap: 15, flexWrap: 'wrap' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <label style={{ fontSize: '0.8rem', color: '#888' }}>Primary Color</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <input
+                                    type="color"
+                                    value={data.messengerTheme?.primary || "#007AFF"}
+                                    onChange={(e) => socket.emit('control:update_messenger_theme', { primary: e.target.value })}
+                                    style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                />
+                                <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.primary}</span>
+                            </div>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            <label style={{ fontSize: '0.8rem', color: '#888' }}>Background</label>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <input
+                                    type="color"
+                                    value={data.messengerTheme?.background || "#000000"}
+                                    onChange={(e) => socket.emit('control:update_messenger_theme', { background: e.target.value })}
+                                    style={{ border: 'none', width: 40, height: 40, cursor: 'pointer', background: 'none' }}
+                                />
+                                <span style={{ fontSize: '0.9rem', fontFamily: 'monospace' }}>{data.messengerTheme?.background}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* SIDEBAR: CHAT LIST */}
                 <div className="glass" style={{ padding: '15px', borderRadius: '16px', height: 'fit-content' }}>
                     <h3 style={{ marginTop: 0 }}>Chats</h3>
