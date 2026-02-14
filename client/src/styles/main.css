@@ -11,20 +11,21 @@
   --font-main: 'Outfit', sans-serif;
 }
 
+html,
 body {
   margin: 0;
   padding: 0;
   font-family: var(--font-main);
   background-color: var(--bg-dark);
   color: var(--text-primary);
-  overflow: hidden;
-  /* Prevent body scroll */
-  overscroll-behavior: none;
   /* Prevent rubber banding */
-  position: fixed;
-  /* Lock body in place */
+  overflow: hidden;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  /* min-height: -webkit-fill-available; // sometimes causes issues with 100dvh */
+  -webkit-text-size-adjust: 100%;
 }
 
 /* Reset basics */
@@ -35,12 +36,11 @@ body {
 /* App Container for Mobile View */
 .app-container {
   width: 100%;
-  height: 100vh;
-  /* Fallback */
+  height: 100%;
   height: 100dvh;
   display: flex;
   flex-direction: column;
-  background: var(--bg-dark);
+  /* background: var(--bg-dark); Removed to allow body bg control */
   overflow: hidden;
 }
 

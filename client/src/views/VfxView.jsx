@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useEffect } from 'react';
 
 export default function VfxView({ data }) {
     const settings = data.vfxSettings || {
@@ -7,7 +7,7 @@ export default function VfxView({ data }) {
         blueColor: '#0000FF',
         customColor: '#FF00FF',
         markersEnabled: true,
-        markerColor: '#FFFFFF',
+        markerColor: '#000000ff',
         markerCountX: 5,
         markerCountY: 9,
         markerSize: 20
@@ -35,6 +35,29 @@ export default function VfxView({ data }) {
         }
         return { grid, cols, rows };
     }, [settings.markersEnabled, settings.markerCountX, settings.markerCountY]);
+
+    // Sync Meta Theme Color & Body Background for Notch/Overscroll support
+    useEffect(() => {
+        // 1. Update Meta Tag (iOS Safari / Android Chrome)
+        let metaThemeColor = document.querySelector("meta[name='theme-color']");
+        if (!metaThemeColor) {
+            metaThemeColor = document.createElement('meta');
+            metaThemeColor.name = "theme-color";
+            document.head.appendChild(metaThemeColor);
+        }
+        metaThemeColor.setAttribute("content", bgColor);
+
+        // 2. Update Body & HTML Background (Overscroll / Notch area)
+        document.body.style.backgroundColor = bgColor;
+        document.documentElement.style.backgroundColor = bgColor;
+
+        // Cleanup: Reset to black when leaving this view
+        return () => {
+            metaThemeColor.setAttribute("content", "#000000");
+            document.body.style.backgroundColor = "#000000";
+            document.documentElement.style.backgroundColor = "#000000";
+        };
+    }, [bgColor]);
 
     return (
         <div style={{

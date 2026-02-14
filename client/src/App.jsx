@@ -48,14 +48,26 @@ function App() {
         }
     }, []);
 
-    // Dynamically update document title
+    // Dynamically update document title & global background
     useEffect(() => {
         if (data?.datingAppName) {
             document.title = data.datingAppName;
         } else {
             document.title = DEFAULT_APP_NAME;
         }
-    }, [data]);
+
+        // Global Background Control
+        // If we are NOT in VFX mode, ensure the default dark background is set.
+        // VFX mode handles its own background in VfxView.jsx
+        if (view !== 'actor' || (data && data.activeApp !== 'vfx')) {
+            document.body.style.backgroundColor = '#0f172a'; // matches var(--bg-dark)
+            document.documentElement.style.backgroundColor = '#0f172a';
+
+            // Reset meta theme color to black/dark for non-VFX views
+            const metaThemeColor = document.querySelector("meta[name='theme-color']");
+            if (metaThemeColor) metaThemeColor.setAttribute("content", "#0f172a");
+        }
+    }, [data, view]);
 
     if (!data) return <div style={{ color: 'white', padding: 20 }}>Loading...</div>;
 
