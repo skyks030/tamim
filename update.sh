@@ -14,6 +14,7 @@ git pull origin main
 echo "[2/3] Rebuilding Docker Image..."
 docker build -t tamim-app:latest .
 
+
 # 3. Restart Container
 echo "[3/3] Restarting Container..."
 
@@ -23,9 +24,14 @@ if [ "$(docker ps -aq -f name=tamim-app)" ]; then
     docker rm tamim-app
 fi
 
-# Run new container
+# Detect Certs Directory
+CERTS_DIR="$(pwd)/certs"
+
+# Run new container with SSL support
 docker run -d \
-  -p 443:3000 \
+  -p 80:3000 \
+  -p 443:3443 \
+  -v "$CERTS_DIR":/app/certs \
   --restart always \
   --name tamim-app \
   tamim-app:latest

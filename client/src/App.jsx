@@ -5,11 +5,7 @@ import ActorView from './views/ActorView';
 import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
 import { DEFAULT_APP_NAME } from './constants';
-import { io } from 'socket.io-client';
-import axios from 'axios';
-import ActorView from './views/ActorView';
-import ControlView from './views/ControlView';
-import DatingView from './views/DatingView';
+
 
 // Global socket connection
 const socket = io();
