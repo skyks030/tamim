@@ -95,6 +95,18 @@ const INITIAL_DB = {
     primary: "#007AFF", // Default Blue
     background: "#000000",
     text: "#FFFFFF"
+  },
+  // Phase 3: VFX Screen
+  vfxSettings: {
+    mode: 'green', // 'green' | 'blue' | 'custom'
+    greenColor: '#00FF00',
+    blueColor: '#0000FF',
+    customColor: '#FF00FF',
+    markersEnabled: true,
+    markerColor: '#FFFFFF', // High contrast
+    markerCountX: 5,
+    markerCountY: 9,
+    markerSize: 20
   }
 };
 
@@ -667,6 +679,13 @@ io.on('connection', (socket) => {
   // Update Messenger Theme
   socket.on('control:update_messenger_theme', (theme) => {
     db.messengerTheme = { ...db.messengerTheme, ...theme };
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update VFX Settings
+  socket.on('control:update_vfx_settings', (settings) => {
+    db.vfxSettings = { ...db.vfxSettings, ...settings };
     saveDb();
     io.emit('data:update', db);
   });

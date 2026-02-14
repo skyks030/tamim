@@ -4,6 +4,7 @@ import axios from 'axios';
 import ActorView from './views/ActorView';
 import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
+import VfxView from './views/VfxView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
@@ -99,6 +100,9 @@ function App() {
     const renderActorApp = () => {
         if (data.activeApp === 'dating') {
             return <DatingView socket={socket} data={data} />;
+        }
+        if (data.activeApp === 'vfx') {
+            return <VfxView data={data} />;
         }
         return <ActorView socket={socket} data={data} />;
     };

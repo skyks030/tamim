@@ -224,7 +224,7 @@
       "dissolutionMessage": "This match has been dissolved."
     }
   ],
-  "activeChatId": "2f780b21-bbeb-4d3f-aa00-f5ce2acc0f04",
+  "activeChatId": "ca6109aa-a4df-4d00-81c1-db4fb0921d97",
   "statusPresets": [
     {
       "id": "sp1",
@@ -243,7 +243,7 @@
     }
   ],
   "actorAvatar": null,
-  "activeApp": "messenger",
+  "activeApp": "vfx",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
@@ -336,6 +336,17 @@
     "messageText": "#ffffff",
     "outgoing": "#7f1733",
     "incoming": "#e2a1a1"
+  },
+  "vfxSettings": {
+    "mode": "green",
+    "greenColor": "#00FF00",
+    "blueColor": "#0000FF",
+    "customColor": "#FF00FF",
+    "markersEnabled": true,
+    "markerColor": "#000000",
+    "markerCountX": 2,
+    "markerCountY": 4,
+    "markerSize": 37
   },
   "datingAppName": "LOVE ME!!!",
   "globalScenes": [
