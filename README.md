@@ -26,4 +26,16 @@ To update the application to the latest version on GitHub, run:
 chmod +x ./update.sh && ./update.sh
 ```
 
+
 This will automatically pull the latest code, rebuild the container, and restart the app.
+
+
+## SSL Configuration (HTTPS)
+
+The installer script (`./install_on_linux.sh`) now includes an **interactive SSL setup**.
+When you run it, you will be asked if you want to use:
+
+1.  **Let's Encrypt (Trusted)**: Requires a domain name pointing to your server and Port 80 open.
+2.  **Self-Signed (Default)**: Works with any IP, but causes a browser warning.
+
+Simply run the installer and follow the prompts!
