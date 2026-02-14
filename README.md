@@ -7,7 +7,7 @@ A containerized messaging and dating simulation application.
 Run this single command on your Linux server to install Docker, build the app, and run it:
 
 ```bash
-git clone https://github.com/skyks030/tamim.git && cd tamim && chmod ./install_on_linux.sh && ./install_on_linux.sh
+git clone https://github.com/skyks030/tamim.git && cd tamim && chmod +x ./install_on_linux.sh && ./install_on_linux.sh
 ```
 
 This will:
