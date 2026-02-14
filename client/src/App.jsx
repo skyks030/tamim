@@ -4,6 +4,12 @@ import axios from 'axios';
 import ActorView from './views/ActorView';
 import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
+import { DEFAULT_APP_NAME } from './constants';
+import { io } from 'socket.io-client';
+import axios from 'axios';
+import ActorView from './views/ActorView';
+import ControlView from './views/ControlView';
+import DatingView from './views/DatingView';
 
 // Global socket connection
 const socket = io();
@@ -45,6 +51,15 @@ function App() {
         }
     }, []);
 
+    // Dynamically update document title
+    useEffect(() => {
+        if (data?.datingAppName) {
+            document.title = data.datingAppName;
+        } else {
+            document.title = DEFAULT_APP_NAME;
+        }
+    }, [data]);
+
     if (!data) return <div style={{ color: 'white', padding: 20 }}>Loading...</div>;
 
     if (view === 'landing') {
@@ -57,7 +72,7 @@ function App() {
                 justifyContent: 'center',
                 gap: '20px'
             }}>
-                <h1>Spark Demo</h1>
+                <h1>{data?.datingAppName || DEFAULT_APP_NAME} Demo</h1>
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <button
                         className="control-btn primary"

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Heart, X, Info } from 'lucide-react';
+import { DEFAULT_APP_NAME } from '../constants';
 
 export default function DatingView({ data, socket }) {
     const { datingProfiles, activeDatingProfileId, datingAppName } = data;
@@ -158,7 +159,7 @@ export default function DatingView({ data, socket }) {
             {/* Header */}
             <div style={{ padding: 20, textAlign: 'center', zIndex: 10 }}>
                 <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: theme.primary }}>
-                    {datingAppName || 'Spark'}
+                    {datingAppName || DEFAULT_APP_NAME}
                 </span>
             </div>
 

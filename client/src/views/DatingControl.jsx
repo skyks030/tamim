@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Plus, Trash2, Upload, X, Save, Edit2, Play, ArrowUp, ArrowDown, Settings, Heart } from 'lucide-react';
 import axios from 'axios';
+import { DEFAULT_APP_NAME } from '../constants';
 
 export default function DatingControl({ socket, data }) {
     const { datingProfiles = [], activeDatingProfileId, datingAppName } = data;
@@ -8,7 +9,7 @@ export default function DatingControl({ socket, data }) {
     const [isEditing, setIsEditing] = useState(false);
 
     // Config State
-    const [appNameInput, setAppNameInput] = useState(datingAppName || 'Spark');
+    const [appNameInput, setAppNameInput] = useState(datingAppName || DEFAULT_APP_NAME);
 
     // New Profile State
     const [isCreating, setIsCreating] = useState(false);
@@ -34,7 +35,7 @@ export default function DatingControl({ socket, data }) {
 
     // Sync input with data if it changes externally
     useEffect(() => {
-        setAppNameInput(datingAppName || 'Spark');
+        setAppNameInput(datingAppName || DEFAULT_APP_NAME);
     }, [datingAppName]);
 
     const handleSaveAppName = () => {
@@ -207,7 +208,7 @@ export default function DatingControl({ socket, data }) {
                                 // Use REST for reliability
                                 axios.post('/api/control/app-name', { name: val }).catch(err => console.error(err));
                             }}
-                            placeholder="App Name (e.g. Spark)"
+                            placeholder={`App Name (e.g. ${DEFAULT_APP_NAME})`}
                         />
                     </div>
                 </div>
