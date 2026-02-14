@@ -68,7 +68,7 @@ function App() {
                 justifyContent: 'center',
                 gap: '20px'
             }}>
-                <h1>{data?.datingAppName || DEFAULT_APP_NAME} Demo</h1>
+                <h1>{data?.datingAppName || DEFAULT_APP_NAME}</h1>
                 <div style={{ display: 'flex', gap: '20px' }}>
                     <button
                         className="control-btn primary"

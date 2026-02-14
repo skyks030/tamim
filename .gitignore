@@ -20,6 +20,10 @@ uploads/
 client/dist/
 server/client_build/
 
+
+# Certificates (Important!)
+certs/
+
 # Logs
 npm-debug.log*
 yarn-debug.log*

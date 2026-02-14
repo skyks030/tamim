@@ -159,16 +159,23 @@ if [ "$ssl_choice" != "1" ]; then
 fi
 
 
+
 # 5. Run Container
 echo "[5/5] Starting Application..."
 echo "Running on:"
 echo "  - HTTP:  http://<your-ip>:80 -> 3000 (Internal)"
 echo "  - HTTPS: https://<your-ip>:443 -> 3443 (Internal)"
 
+# Ensure persistence directories exist
+mkdir -p server/data
+mkdir -p server/uploads
+
 docker run -d \
   -p 80:3000 \
   -p 443:3443 \
   -v "$CERTS_DIR":/app/certs \
+  -v "$(pwd)/server/data":/app/data \
+  -v "$(pwd)/server/uploads":/app/uploads \
   --restart always \
   --name tamim-app \
   tamim-app:latest
