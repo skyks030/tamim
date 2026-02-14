@@ -1,6 +1,8 @@
 #!/bin/bash
+set -e # Exit immediately if a command exits with a non-zero status
 
-# Tamim App - Update Script
+# Error Handling
+trap 'echo "❌ Error: Command failed on line $LINENO"; exit 1' ERR
 
 echo "=========================================="
 echo "   Updating Tamim App..."
@@ -10,22 +12,28 @@ echo "=========================================="
 echo "[1/3] Pulling latest changes from Git..."
 git pull origin main
 
-# 2. Rebuild Docker Image
+# 2. Rebuild Docker Image with Verbose Output
 echo "[2/3] Rebuilding Docker Image..."
-docker build -t tamim-app:latest .
-
+echo "-----------------------------------------------------"
+docker build --progress=plain -t tamim-app:latest .
+echo "-----------------------------------------------------"
 
 # 3. Restart Container
 echo "[3/3] Restarting Container..."
 
 # Stop and remove existing container
 if [ "$(docker ps -aq -f name=tamim-app)" ]; then
-    docker stop tamim-app
-    docker rm tamim-app
+    docker stop tamim-app >/dev/null
+    docker rm tamim-app >/dev/null
 fi
 
 # Detect Certs Directory
 CERTS_DIR="$(pwd)/certs"
+
+# Check if certs exist to warn user
+if [ ! -f "$CERTS_DIR/privkey.pem" ] || [ ! -f "$CERTS_DIR/fullchain.pem" ]; then
+    echo "⚠️  Warning: SSL certificates not found in $CERTS_DIR. App might default to HTTP or self-signed if generated."
+fi
 
 # Run new container with SSL support
 docker run -d \
@@ -37,6 +45,6 @@ docker run -d \
   tamim-app:latest
 
 echo "=========================================="
-echo "   Update Complete!"
+echo "   ✅ Update Complete!"
 echo "   App restarted on Port 443."
 echo "=========================================="

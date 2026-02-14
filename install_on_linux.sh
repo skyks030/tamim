@@ -1,4 +1,8 @@
 #!/bin/bash
+set -e # Exit immediately on error
+
+# Error Handling
+trap 'echo "❌ Error: Command failed on line $LINENO"; exit 1' ERR
 
 # Tamim App - Auto Installer for Linux
 
@@ -59,11 +63,13 @@ echo "[3/4] Building Docker Image..."
 # Stop and remove existing container if it exists
 if [ "$(docker ps -aq -f name=tamim-app)" ]; then
     echo "Stopping existing container..."
-    docker stop tamim-app
-    docker rm tamim-app
+    docker stop tamim-app >/dev/null
+    docker rm tamim-app >/dev/null
 fi
 
-docker build -t tamim-app:latest .
+echo "-----------------------------------------------------"
+docker build --progress=plain -t tamim-app:latest .
+echo "-----------------------------------------------------"
 
 
 
