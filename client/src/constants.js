@@ -1,1 +1,1 @@
-export const DEFAULT_APP_NAME = "Spark";
+export const DEFAULT_APP_NAME = "Tamim";
