@@ -35,6 +35,7 @@ if [ ! -f "$CERTS_DIR/privkey.pem" ] || [ ! -f "$CERTS_DIR/fullchain.pem" ]; the
     echo "⚠️  Warning: SSL certificates not found in $CERTS_DIR. App might default to HTTP or self-signed if generated."
 fi
 
+
 # Run new container with SSL support
 docker run -d \
   -p 80:3000 \
@@ -44,7 +45,20 @@ docker run -d \
   --name tamim-app \
   tamim-app:latest
 
-echo "=========================================="
-echo "   ✅ Update Complete!"
-echo "   App restarted on Port 443."
-echo "=========================================="
+echo "Waiting for container to initialize..."
+sleep 5
+
+# Check if container is running
+if [ "$(docker inspect -f '{{.State.Running}}' tamim-app 2>/dev/null)" == "true" ]; then
+    echo "=========================================="
+    echo "   ✅ Update Complete & Running!"
+    echo "   App restarted on Port 443."
+    echo "=========================================="
+else
+    echo "=========================================="
+    echo "   ❌ Error: Container failed to start!"
+    echo "   Checking logs..."
+    echo "=========================================="
+    docker logs tamim-app
+    exit 1
+fi

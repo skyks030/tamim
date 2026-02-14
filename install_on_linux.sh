@@ -158,6 +158,7 @@ if [ "$ssl_choice" != "1" ]; then
     fi
 fi
 
+
 # 5. Run Container
 echo "[5/5] Starting Application..."
 echo "Running on:"
@@ -172,12 +173,25 @@ docker run -d \
   --name tamim-app \
   tamim-app:latest
 
-echo "=========================================="
-echo "   Installation Complete!"
-if [ "$ssl_choice" == "1" ]; then
-    echo "   App is running at https://$DOMAIN"
+echo "Waiting for container to initialize..."
+sleep 5
+
+# Check if container is running
+if [ "$(docker inspect -f '{{.State.Running}}' tamim-app 2>/dev/null)" == "true" ]; then
+    echo "=========================================="
+    echo "   ✅ Installation Complete & Running!"
+    if [ "$ssl_choice" == "1" ]; then
+        echo "   App is running at https://$DOMAIN"
+    else
+        echo "   App is running at https://<your-ip>"
+        echo "   (Self-signed certificate: Accept warning in browser)"
+    fi
+    echo "=========================================="
 else
-    echo "   App is running at https://<your-ip>"
-    echo "   (Self-signed certificate: Accept warning in browser)"
+    echo "=========================================="
+    echo "   ❌ Error: Container failed to start!"
+    echo "   Checking logs..."
+    echo "=========================================="
+    docker logs tamim-app
+    exit 1
 fi
-echo "=========================================="
