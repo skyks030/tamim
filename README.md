@@ -23,7 +23,7 @@ This will:
 To update the application to the latest version on GitHub, run:
 
 ```bash
-./update.sh
+chmod +x ./update.sh &&./update.sh
 ```
 
 This will automatically pull the latest code, rebuild the container, and restart the app.

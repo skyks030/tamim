@@ -65,17 +65,42 @@ fi
 
 docker build -t tamim-app:latest .
 
-# 4. Run Container
-echo "[4/4] Starting Application..."
-echo "Running on Port 443 (External) -> 3000 (Internal)"
+
+# 4. SSL Certificates (Self-Signed for testing if not present)
+echo "[4/5] Checking SSL Certificates..."
+CERTS_DIR="$(pwd)/certs"
+
+if [ ! -d "$CERTS_DIR" ]; then
+    mkdir -p "$CERTS_DIR"
+fi
+
+if [ ! -f "$CERTS_DIR/privkey.pem" ] || [ ! -f "$CERTS_DIR/fullchain.pem" ]; then
+    echo "No certificates found. Generating self-signed certificates for testing..."
+    openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+        -keyout "$CERTS_DIR/privkey.pem" \
+        -out "$CERTS_DIR/fullchain.pem" \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost"
+    echo "Self-signed certificates generated."
+else
+    echo "Certificates found in $CERTS_DIR."
+fi
+
+# 5. Run Container
+echo "[5/5] Starting Application..."
+echo "Running on:"
+echo "  - HTTP:  http://<your-ip>:80 -> 3000 (Internal)"
+echo "  - HTTPS: https://<your-ip>:443 -> 3443 (Internal)"
 
 docker run -d \
-  -p 443:3000 \
+  -p 80:3000 \
+  -p 443:3443 \
+  -v "$CERTS_DIR":/app/certs \
   --restart always \
   --name tamim-app \
   tamim-app:latest
 
 echo "=========================================="
 echo "   Installation Complete!"
-echo "   App is running at http://<your-ip>:443"
+echo "   App is running at https://<your-ip>"
+echo "   (Accept the self-signed certificate warning if using generated certs)"
 echo "=========================================="

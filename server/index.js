@@ -765,6 +765,37 @@ app.get('*', (req, res) => {
 });
 
 const PORT = 3000;
+const HTTPS_PORT = 3443;
+
+// --- HTTPS SUPPORT ---
+const certsDir = '/app/certs';
+const keyPath = path.join(certsDir, 'privkey.pem');
+const certPath = path.join(certsDir, 'fullchain.pem');
+
+let httpsServer = null;
+
+if (fs.existsSync(keyPath) && fs.existsSync(certPath)) {
+  try {
+    const httpsOptions = {
+      key: fs.readFileSync(keyPath),
+      cert: fs.readFileSync(certPath)
+    };
+    const https = require('https');
+    httpsServer = https.createServer(httpsOptions, app);
+
+    // Attach Socket.IO to HTTPS server as well
+    io.attach(httpsServer);
+
+    httpsServer.listen(HTTPS_PORT, () => {
+      console.log(`HTTPS Server is running on port ${HTTPS_PORT}`);
+    });
+  } catch (e) {
+    console.error("Failed to start HTTPS server:", e);
+  }
+} else {
+  console.log("No SSL certificates found, skipping HTTPS.");
+}
+
 server.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`HTTP Server is running on port ${PORT}`);
 });
