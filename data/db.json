@@ -27,6 +27,26 @@
           "id": 1770983594033,
           "text": "Hey! 👋",
           "sender": "match"
+        },
+        {
+          "id": 1771167851462,
+          "text": "djdjjdj",
+          "sender": "me"
+        },
+        {
+          "id": 1771167853990,
+          "text": "jjdkgk",
+          "sender": "me"
+        },
+        {
+          "id": 1771167855902,
+          "text": "djfl",
+          "sender": "me"
+        },
+        {
+          "id": 1771167857521,
+          "text": "djjd",
+          "sender": "me"
         }
       ],
       "presets": [
@@ -243,7 +263,7 @@
     }
   ],
   "actorAvatar": null,
-  "activeApp": "dating",
+  "activeApp": "messenger",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",

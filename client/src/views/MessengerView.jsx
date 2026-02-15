@@ -331,7 +331,10 @@ export default function MessengerView({ socket, data }) {
             {/* Header (Fixed at Top) */}
             <div style={{ // REMOVED glass
                 zIndex: 200,
-                position: 'relative',
+                position: 'absolute', // Fixed at top
+                top: 0,
+                left: 0,
+                right: 0,
                 borderRadius: '24px', // Round all corners as requested
                 margin: '10px 10px 0 10px', // Float
                 // borderBottom: '1px solid var(--glass-border)', // No border needed if solid color
@@ -425,7 +428,7 @@ export default function MessengerView({ socket, data }) {
                             justifyContent: 'flex-start', // Messages start from top
                             width: '100%',
                             gap: '15px',
-                            paddingTop: '10px',
+                            paddingTop: '80px', // Adjusted for Fixed Header (60px + margins)
                             paddingBottom: '20px',
                         }}>
                             {/* Top Spacer: Pushes content DOWN when keyboard is OPEN */}
