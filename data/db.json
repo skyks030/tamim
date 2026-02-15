@@ -243,7 +243,7 @@
     }
   ],
   "actorAvatar": null,
-  "activeApp": "vfx",
+  "activeApp": "dating",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
@@ -251,7 +251,8 @@
       "age": "23",
       "bio": "looool",
       "imageUrl": "/uploads/4e27c057-b63a-4e44-b357-7b0d62855e4e.jpeg",
-      "avatarColor": "linear-gradient(135deg, #d431de 0%, #75709b 100%)"
+      "avatarColor": "linear-gradient(135deg, #d431de 0%, #75709b 100%)",
+      "isMatch": true
     },
     {
       "id": "524dd98f-3096-47d9-a4a3-7455625c5650",
@@ -259,7 +260,8 @@
       "age": "23",
       "bio": "sdagev",
       "imageUrl": "/uploads/8faf1bf1-4576-4950-bb76-d405e7842255.jpeg",
-      "avatarColor": "linear-gradient(135deg, #f27e0f 0%, #10f349 100%)"
+      "avatarColor": "linear-gradient(135deg, #f27e0f 0%, #10f349 100%)",
+      "isMatch": true
     },
     {
       "id": "ce082ab5-07ff-44da-ac20-b548cb39d268",
@@ -268,7 +270,7 @@
       "bio": "Reiten",
       "imageUrl": "/uploads/2d616bc1-f5d9-4c13-bf64-d6132902911c.jpeg",
       "avatarColor": "linear-gradient(135deg, #51d030 0%, #502ec4 100%)",
-      "isMatch": false
+      "isMatch": true
     },
     {
       "id": "80e39895-26d9-4b02-9a39-f3a09cc72b10",
@@ -280,7 +282,7 @@
       "isMatch": true
     }
   ],
-  "activeDatingProfileId": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
+  "activeDatingProfileId": "ce082ab5-07ff-44da-ac20-b548cb39d268",
   "datingScenarios": [
     {
       "id": "8babb727-776b-4187-840a-0a65cf4ec6ce",
@@ -329,6 +331,13 @@
     "background": "#7f1733",
     "text": "#ffffff"
   },
+  "datingMatchSettings": {
+    "overlayColor": "rgba(178,98,118,0.75)",
+    "title": "It's a Match!",
+    "subtitle": "You and {name} liked each other.",
+    "overlayImage": "/uploads/8fa20f78-dfce-4227-9e92-3b36387e04f3.png",
+    "overlayImageSize": 97
+  },
   "messengerTheme": {
     "primary": "#73112b",
     "background": "#b96a6a",
@@ -345,10 +354,25 @@
     "markersEnabled": true,
     "markerColor": "#000000",
     "markerCountX": 2,
-    "markerCountY": 4,
-    "markerSize": 37
+    "markerCountY": 3,
+    "markerSize": 55,
+    "scrollingMarkersEnabled": true,
+    "scrollingMarkerColor": "#000000",
+    "scrollDirection": "vertical",
+    "scrollingMarkerSize": 37,
+    "scrollingMarkerCountY": 1,
+    "scrollingMarkerCountX": 2,
+    "markerLayoutMode": "count",
+    "markerSpacingY": 142,
+    "markerSpacingX": 178,
+    "scrollingLayoutMode": "spacing",
+    "scrollingMarkerSpacingY": 185,
+    "scrollingMarkerSpacingX": 158,
+    "markerSpacing": 295,
+    "scrollingMarkerSpacing": 142,
+    "scrollingMomentum": true
   },
-  "datingAppName": "LOVE ME!!!",
+  "datingAppName": " TAMIM",
   "globalScenes": [
     {
       "id": "d5317217-ff22-4eb3-86ed-6e3338d9b8b7",

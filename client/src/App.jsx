@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { io } from 'socket.io-client';
 import axios from 'axios';
-import ActorView from './views/ActorView';
+import MessengerView from './views/MessengerView';
 import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
 import VfxView from './views/VfxView';
@@ -74,7 +74,7 @@ function App() {
     if (view === 'landing') {
         return (
             <div style={{
-                height: '100vh',
+                height: '100dvh',
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
@@ -116,16 +116,17 @@ function App() {
         if (data.activeApp === 'vfx') {
             return <VfxView data={data} />;
         }
-        return <ActorView socket={socket} data={data} />;
+        return <MessengerView socket={socket} data={data} />;
     };
 
     // Pass socket and global data down
+    if (view === 'actor') {
+        return renderActorApp();
+    }
+
     return (
         <div className="app-container">
-            {view === 'actor'
-                ? renderActorApp()
-                : <ControlView socket={socket} data={data} />
-            }
+            <ControlView socket={socket} data={data} />
         </div>
     );
 }

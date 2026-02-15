@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from 'react';
 import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle } from 'lucide-react';
 import VirtualKeyboard from '../components/VirtualKeyboard';
 
-export default function ActorView({ socket, data }) {
+export default function MessengerView({ socket, data }) {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'chat'
     const [localInputValue, setLocalInputValue] = useState("");
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // Virtual Keyboard
@@ -23,6 +23,16 @@ export default function ActorView({ socket, data }) {
             setTimeout(() => setIsKeyboardVisible(false), 10);
         }
     }, [activeChatId]);
+
+    // Sync Meta Theme Color & Body Background for Notch/Overscroll support
+    useEffect(() => {
+        const bg = theme.background || '#000000';
+        document.body.style.backgroundColor = bg;
+        document.documentElement.style.backgroundColor = bg;
+
+        const metaThemeColor = document.querySelector("meta[name='theme-color']");
+        if (metaThemeColor) metaThemeColor.setAttribute("content", bg);
+    }, [theme]);
 
     // Socket listeners for specific UI events (typing)
     const [isTyping, setIsTyping] = useState(false);
@@ -110,7 +120,8 @@ export default function ActorView({ socket, data }) {
     if (viewMode === 'list') {
         return (
             <div className="chat-screen page-transition" style={{
-                height: '100dvh',
+                height: '100%',
+                minHeight: '100dvh',
                 width: '100vw',
                 overflow: 'hidden',
                 position: 'relative',
@@ -274,7 +285,8 @@ export default function ActorView({ socket, data }) {
 
     return (
         <div className="chat-screen page-transition" style={{
-            height: '100dvh',
+            height: '100%',
+            minHeight: '100dvh',
             width: '100vw',
             overflow: 'hidden',
             position: 'relative', // Ensure relative context
@@ -355,17 +367,20 @@ export default function ActorView({ socket, data }) {
                 position: 'relative',
                 overflow: 'hidden',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
+                height: '100%',
+                minHeight: 0 // Flexbox nesting fix
             }}>
                 {/* Unified Sliding Wrapper */}
                 <div
                     className="sliding-wrapper"
                     style={{
-                        // HEIGHT FIX: Strictly match viewport
+                        flex: 1, // FORCE FILL
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        position: 'relative', // Ensure absolute child positions relative to this
+                        justifyContent: 'flex-end',
+                        position: 'relative',
                         // Slide the entire container up by Keyboard Height + Keyboard Bottom Margin (280 + 30 + safe area approx)
                         // Using -320px to be safe and lift it nicely
                         transform: isKeyboardVisible ? 'translateY(-320px)' : 'none',
@@ -402,14 +417,14 @@ export default function ActorView({ socket, data }) {
                             paddingBottom: '0px',
                         }}
                     >
-                        {/* SCROLL WRAPPER: Ensures content is always > 100% height to allow "Rubber Banding" */}
+                        {/* SCROLL WRAPPER */}
                         <div style={{
-                            minHeight: 'calc(100% + 1px)',
+                            flex: 1,
                             display: 'flex',
                             flexDirection: 'column',
-                            flex: 1,
+                            justifyContent: 'flex-start', // Messages start from top
                             width: '100%',
-                            gap: '15px', // Increase message spacing
+                            gap: '15px',
                             paddingTop: '10px',
                             paddingBottom: '20px',
                         }}>

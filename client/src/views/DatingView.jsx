@@ -31,6 +31,17 @@ export default function DatingView({ data, socket }) {
         setShowMatch(false); // Clear match screen if we were stuck there
     }, [activeDatingProfileId]);
 
+    // Sync Meta Theme Color & Body Background for Notch/Overscroll support
+    useEffect(() => {
+        if (theme?.background) {
+            document.body.style.backgroundColor = theme.background;
+            document.documentElement.style.backgroundColor = theme.background;
+
+            const metaThemeColor = document.querySelector("meta[name='theme-color']");
+            if (metaThemeColor) metaThemeColor.setAttribute("content", theme.background);
+        }
+    }, [theme]);
+
     const handleSwipeTrigger = (direction) => {
         if (swipeState) return;
         setSwipeState(direction);
@@ -121,7 +132,7 @@ export default function DatingView({ data, socket }) {
 
     if (!currentProfile) {
         return (
-            <div style={{ height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexDirection: 'column' }}>
+            <div style={{ width: '100vw', height: '100%', minHeight: '100dvh', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexDirection: 'column' }}>
                 <h2>No profiles nearby...</h2>
                 <p>Waiting for more people.</p>
             </div>
@@ -130,7 +141,9 @@ export default function DatingView({ data, socket }) {
 
     return (
         <div style={{
+            width: '100vw',
             height: '100%',
+            minHeight: '100dvh',
             background: theme.background,
             color: theme.text,
             position: 'relative',
@@ -159,7 +172,7 @@ export default function DatingView({ data, socket }) {
             {/* Header */}
             <div style={{ padding: 20, textAlign: 'center', zIndex: 10 }}>
                 <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: theme.primary }}>
-                    {datingAppName || DEFAULT_APP_NAME}
+                    {datingAppName ?? DEFAULT_APP_NAME}
                 </span>
             </div>
 
@@ -287,21 +300,39 @@ export default function DatingView({ data, socket }) {
             {showMatch && (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, width: '100%', height: '100%',
-                    background: 'rgba(0,0,0,0.85)',
+                    background: data.datingMatchSettings?.overlayColor || 'rgba(0,0,0,0.85)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 100,
                     animation: 'fadeIn 0.3s'
                 }}>
+                    {data.datingMatchSettings?.overlayImage && (
+                        <img
+                            src={data.datingMatchSettings.overlayImage}
+                            style={{
+                                maxWidth: `${data.datingMatchSettings.overlayImageSize ?? 80}%`,
+                                maxHeight: '30vh', // Prevent it from taking over entire screen height 
+                                marginBottom: 20,
+                                objectFit: 'contain',
+                                animation: 'pulseHeart 2s infinite ease-in-out'
+                            }}
+                            alt="Match Overlay"
+                        />
+                    )}
+
                     <h1 style={{
                         fontSize: '3rem', fontStyle: 'italic',
                         background: `linear-gradient(45deg, ${theme.primary}, #FF8E53)`,
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         marginBottom: 20,
+                        marginTop: 0,
+                        textAlign: 'center',
+                        display: data.datingMatchSettings?.title === "" ? 'none' : 'block', // Hide if explicitly empty
                         animation: 'pulseHeart 2s infinite ease-in-out'
                     }}>
-                        It's a Match!
+                        {data.datingMatchSettings?.title ?? "It's a Match!"}
                     </h1>
+
                     <div style={{ display: 'flex', gap: 30, alignItems: 'center' }}>
                         <div style={{
                             width: 100, height: 100, borderRadius: '50%',
@@ -322,8 +353,8 @@ export default function DatingView({ data, socket }) {
                             {!data.actorAvatar && "You"}
                         </div>
                     </div>
-                    <p style={{ color: 'white', marginTop: 40, fontSize: '1.2rem', fontWeight: '500', opacity: 0.9 }}>
-                        You and {currentProfile.name} liked each other.
+                    <p style={{ color: 'white', marginTop: 40, fontSize: '1.2rem', fontWeight: '500', opacity: 0.9, textAlign: 'center', padding: '0 20px' }}>
+                        {(data.datingMatchSettings?.subtitle ?? "You and {name} liked each other.").replace("{name}", currentProfile.name)}
                     </p>
 
                     {/* Optional "Keep Playing" button to dismiss faster? 

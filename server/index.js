@@ -91,6 +91,13 @@ const INITIAL_DB = {
     background: "#111111",
     text: "#FFFFFF"
   },
+  datingMatchSettings: {
+    overlayColor: "rgba(0,0,0,0.85)",
+    title: "It's a Match!",
+    subtitle: "You and {name} liked each other.",
+    overlayImage: null,
+    overlayImageSize: 80 // Default width % (relative to container or max-width)
+  },
   messengerTheme: {
     primary: "#007AFF", // Default Blue
     background: "#000000",
@@ -118,6 +125,11 @@ if (fs.existsSync(DB_FILE)) {
     const fileData = fs.readFileSync(DB_FILE, 'utf8');
     const saved = JSON.parse(fileData);
     db = { ...INITIAL_DB, ...saved };
+
+    // Ensure nested objects exist if loading old DB
+    if (!db.datingMatchSettings) db.datingMatchSettings = { ...INITIAL_DB.datingMatchSettings };
+    if (!db.datingTheme) db.datingTheme = { ...INITIAL_DB.datingTheme };
+
 
     // Normalize Presets, Scenarios, and Match Message
     if (db.chats) {
@@ -291,7 +303,7 @@ io.on('connection', (socket) => {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      const purpose = req.body.purpose; // 'chat' or 'actor'
+      const purpose = req.body.purpose; // 'chat', 'actor', 'dating', 'dating-match-overlay'
       const chatId = req.body.chatId;
       const mimeType = req.file.mimetype;
       const ext = mimeType.split('/')[1] || 'png';
@@ -322,11 +334,15 @@ io.on('connection', (socket) => {
         const profileId = req.body.profileId;
         const profile = db.datingProfiles.find(p => p.id === profileId);
         if (profile && profile.imageUrl) deleteOldFile(profile.imageUrl);
+      } else if (purpose === 'dating-match-overlay') {
+        if (db.datingMatchSettings && db.datingMatchSettings.overlayImage) {
+          deleteOldFile(db.datingMatchSettings.overlayImage);
+        }
       }
 
       // Save File
-      if (purpose === 'dating') {
-        // NO COMPRESSION for Dating App, but use ASYNC processing
+      if (purpose === 'dating' || purpose === 'dating-match-overlay') {
+        // NO COMPRESSION for Dating App (or allow PNG transparency for overlay)
         await fs.promises.writeFile(filePath, req.file.buffer);
       } else {
         // Resize and Save using Sharp for others
@@ -358,6 +374,11 @@ io.on('connection', (socket) => {
           saveDb();
           io.emit('data:update', db);
         }
+      } else if (purpose === 'dating-match-overlay') {
+        if (!db.datingMatchSettings) db.datingMatchSettings = {};
+        db.datingMatchSettings.overlayImage = publicUrl;
+        saveDb();
+        io.emit('data:update', db);
       }
 
       res.json({ success: true, url: publicUrl });
@@ -387,6 +408,12 @@ io.on('connection', (socket) => {
       db.actorAvatar = null;
       saveDb();
       io.emit('data:update', db);
+    } else if (purpose === 'dating-match-overlay') {
+      if (db.datingMatchSettings) {
+        db.datingMatchSettings.overlayImage = null;
+        saveDb();
+        io.emit('data:update', db);
+      }
     }
   });
 
@@ -672,6 +699,14 @@ io.on('connection', (socket) => {
   // Update Dating Theme
   socket.on('control:update_dating_theme', (theme) => {
     db.datingTheme = { ...db.datingTheme, ...theme };
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update Dating Match Settings (NEW)
+  socket.on('control:update_dating_match_settings', (settings) => {
+    if (!db.datingMatchSettings) db.datingMatchSettings = {};
+    db.datingMatchSettings = { ...db.datingMatchSettings, ...settings };
     saveDb();
     io.emit('data:update', db);
   });

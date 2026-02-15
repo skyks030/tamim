@@ -9,7 +9,7 @@ export default function DatingControl({ socket, data }) {
     const [isEditing, setIsEditing] = useState(false);
 
     // Config State
-    const [appNameInput, setAppNameInput] = useState(datingAppName || DEFAULT_APP_NAME);
+    const [appNameInput, setAppNameInput] = useState(datingAppName ?? DEFAULT_APP_NAME);
 
     // New Profile State
     const [isCreating, setIsCreating] = useState(false);
@@ -35,7 +35,7 @@ export default function DatingControl({ socket, data }) {
 
     // Sync input with data if it changes externally
     useEffect(() => {
-        setAppNameInput(datingAppName || DEFAULT_APP_NAME);
+        setAppNameInput(datingAppName ?? DEFAULT_APP_NAME);
     }, [datingAppName]);
 
     const handleSaveAppName = () => {
@@ -61,11 +61,19 @@ export default function DatingControl({ socket, data }) {
         const file = e.target.files[0];
         if (!file) return;
 
-        // If second arg is string 'actor', use it as purpose.
-        // If it's an ID (string or number), it's a dating profile ID.
-        const isActor = id_or_purpose === 'actor';
-        const purpose = isActor ? 'actor' : 'dating';
-        const profileId = isActor ? null : id_or_purpose;
+        // 1. Determine Purpose
+        let purpose = 'dating';
+        let profileId = null;
+
+        if (id_or_purpose === 'actor') {
+            purpose = 'actor';
+        } else if (id_or_purpose === 'dating-match-overlay') {
+            purpose = 'dating-match-overlay';
+        } else {
+            // Assume it's a dating profile ID
+            purpose = 'dating';
+            profileId = id_or_purpose;
+        }
 
         setIsUploading(true);
 
@@ -111,8 +119,15 @@ export default function DatingControl({ socket, data }) {
         };
 
         try {
-            // Compress before upload
-            const processedFile = await compressImage(file);
+            // Compress only if NOT overlay (need transparency) and NOT match overlay
+            // Actually, we should probably skip compression for 'dating' too if we want high quality, 
+            // but the server code says "NO COMPRESSION for Dating App" in comments, yet the client was compressing?
+            // Let's align with user request: "durchsichtige Alpha PNG Bilder unterstützen" -> NO COMPRESSION for overlay.
+
+            let processedFile = file;
+            if (purpose !== 'dating-match-overlay' && purpose !== 'dating') {
+                processedFile = await compressImage(file);
+            }
 
             const formData = new FormData();
             formData.append('file', processedFile);
@@ -205,8 +220,8 @@ export default function DatingControl({ socket, data }) {
                             onChange={(e) => {
                                 const val = e.target.value;
                                 setAppNameInput(val);
-                                // Use REST for reliability
-                                axios.post('/api/control/app-name', { name: val }).catch(err => console.error(err));
+                                // Use REST for reliability. Send space if empty to ensure update is processed.
+                                axios.post('/api/control/app-name', { name: val === '' ? ' ' : val }).catch(err => console.error(err));
                             }}
                             placeholder={`App Name (e.g. ${DEFAULT_APP_NAME})`}
                         />
@@ -478,6 +493,156 @@ export default function DatingControl({ socket, data }) {
                         </button>
                     </div>
                 )}
+
+                {/* MATCH SCREEN SETTINGS */}
+                <div className="glass" style={{ padding: '20px', borderRadius: '16px', marginTop: 20 }}>
+                    <h3 style={{ margin: '0 0 15px 0', fontSize: '1rem', opacity: 0.9 }}>Match Screen Settings</h3>
+
+                    {/* Background Color & Opacity */}
+                    <div style={{ marginBottom: 15 }}>
+                        <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>Background Overlay</label>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            <input
+                                type="color"
+                                value={(() => {
+                                    // Parse RGBA to HEX for picker
+                                    const rgba = data.datingMatchSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                    if (rgba.startsWith('#')) return rgba;
+                                    const parts = rgba.match(/[\d.]+/g);
+                                    if (parts && parts.length >= 3) {
+                                        const r = parseInt(parts[0]).toString(16).padStart(2, '0');
+                                        const g = parseInt(parts[1]).toString(16).padStart(2, '0');
+                                        const b = parseInt(parts[2]).toString(16).padStart(2, '0');
+                                        return `#${r}${g}${b}`;
+                                    }
+                                    return "#000000";
+                                })()}
+                                onChange={(e) => {
+                                    const hex = e.target.value;
+                                    // Get current alpha
+                                    const currentRgba = data.datingMatchSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                    let alpha = 0.85;
+                                    const parts = currentRgba.match(/[\d.]+/g);
+                                    if (parts && parts.length === 4) alpha = parts[3];
+
+                                    // Convert Hex to RGB
+                                    const r = parseInt(hex.slice(1, 3), 16);
+                                    const g = parseInt(hex.slice(3, 5), 16);
+                                    const b = parseInt(hex.slice(5, 7), 16);
+
+                                    socket.emit('control:update_dating_match_settings', { overlayColor: `rgba(${r},${g},${b},${alpha})` });
+                                }}
+                                style={{ width: 40, height: 30, border: 'none', background: 'none', cursor: 'pointer' }}
+                            />
+
+                            <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                <span style={{ fontSize: '0.8rem' }}>Opacity</span>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="100"
+                                    value={(() => {
+                                        const rgba = data.datingMatchSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                        const parts = rgba.match(/[\d.]+/g);
+                                        return parts && parts.length === 4 ? parseFloat(parts[3]) * 100 : 85;
+                                    })()}
+                                    onChange={(e) => {
+                                        const alpha = parseInt(e.target.value) / 100;
+                                        // Get current RGB
+                                        const currentRgba = data.datingMatchSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                        let r = 0, g = 0, b = 0;
+                                        if (currentRgba.startsWith('#')) {
+                                            r = parseInt(currentRgba.slice(1, 3), 16);
+                                            g = parseInt(currentRgba.slice(3, 5), 16);
+                                            b = parseInt(currentRgba.slice(5, 7), 16);
+                                        } else {
+                                            const parts = currentRgba.match(/[\d.]+/g);
+                                            if (parts) { r = parts[0]; g = parts[1]; b = parts[2]; }
+                                        }
+                                        socket.emit('control:update_dating_match_settings', { overlayColor: `rgba(${r},${g},${b},${alpha})` });
+                                    }}
+                                    style={{ flex: 1 }}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Overlay Image */}
+                    <div style={{ marginBottom: 15 }}>
+                        <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>Overlay Image (Center)</label>
+                        <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                            {data.datingMatchSettings?.overlayImage ? (
+                                <div style={{ width: 60, height: 60, background: `url(${data.datingMatchSettings.overlayImage}) center/contain no-repeat`, backgroundSize: 'contain', border: '1px solid #444', borderRadius: 4 }}></div>
+                            ) : (
+                                <div style={{ width: 60, height: 60, background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#555' }}>No Img</div>
+                            )}
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                <input
+                                    type="file"
+                                    style={{ display: 'none' }}
+                                    id="overlay-upload"
+                                    onChange={(e) => uploadImage(e, 'dating-match-overlay')}
+                                />
+                                <button className="control-btn secondary" style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
+                                    onClick={() => document.getElementById('overlay-upload').click()}
+                                >
+                                    Upload PNG
+                                </button>
+                                {data.datingMatchSettings?.overlayImage && (
+                                    <button className="control-btn danger" style={{ width: 'auto', padding: '4px 10px', fontSize: '0.8rem' }}
+                                        onClick={() => {
+                                            if (confirm("Remove overlay image?")) {
+                                                socket.emit('control:clear_avatar', { purpose: 'dating-match-overlay' });
+                                            }
+                                        }}
+                                    >
+                                        Remove
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                        {/* Image Size Slider */}
+                        {data.datingMatchSettings?.overlayImage && (
+                            <div style={{ marginTop: 10 }}>
+                                <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>
+                                    <span>Image Size</span>
+                                    <span>{data.datingMatchSettings?.overlayImageSize ?? 80}%</span>
+                                </label>
+                                <input
+                                    type="range"
+                                    min="10"
+                                    max="150"
+                                    value={data.datingMatchSettings?.overlayImageSize ?? 80}
+                                    onChange={(e) => socket.emit('control:update_dating_match_settings', { overlayImageSize: parseInt(e.target.value) })}
+                                    style={{ width: '100%' }}
+                                />
+                            </div>
+                        )}
+                    </div>
+
+                    <div style={{ marginBottom: 10 }}>
+                        <label style={{ display: 'block', marginBottom: 2, fontSize: '0.8rem', opacity: 0.7 }}>Title Text</label>
+                        <input
+                            className="chat-input-field"
+                            value={data.datingMatchSettings?.title ?? "It's a Match!"}
+                            onChange={(e) => socket.emit('control:update_dating_match_settings', { title: e.target.value })}
+                            style={{ width: '100%' }}
+                        />
+                    </div>
+
+                    <div style={{ marginBottom: 10 }}>
+                        <label style={{ display: 'block', marginBottom: 2, fontSize: '0.8rem', opacity: 0.7 }}>Subtitle</label>
+                        <input
+                            className="chat-input-field"
+                            value={data.datingMatchSettings?.subtitle ?? "You and {name} liked each other."}
+                            onChange={(e) => socket.emit('control:update_dating_match_settings', { subtitle: e.target.value })}
+                            style={{ width: '100%' }}
+                            placeholder="Use {name} for profile name"
+                        />
+                    </div>
+
+                </div>
             </div>
         </div >
     );
