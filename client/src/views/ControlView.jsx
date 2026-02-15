@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import MessengerControl from './MessengerControl';
 import DatingControl from './DatingControl';
 import VfxControl from './VfxControl';
+import LockScreenControl from './LockScreenControl';
 import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2, RotateCcw } from 'lucide-react';
 
 export default function ControlView({ socket, data }) {
@@ -49,6 +50,7 @@ export default function ControlView({ socket, data }) {
                                 <option value="messenger">Messenger</option>
                                 <option value="dating">Dating App</option>
                                 <option value="vfx">Vfx Screen</option>
+                                <option value="lockscreen">Lock Screen</option>
                             </select>
                             <ChevronDown size={16} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', opacity: 0.7 }} />
                         </div>
@@ -197,6 +199,8 @@ export default function ControlView({ socket, data }) {
                 {currentTab === 'dating' && <DatingControl socket={socket} data={data} />}
 
                 {currentTab === 'vfx' && <VfxControl socket={socket} data={data} />}
+
+                {currentTab === 'lockscreen' && <LockScreenControl socket={socket} data={data} />}
 
             </div>
         </div>

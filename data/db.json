@@ -5,7 +5,7 @@
       "name": "jaeeahfb",
       "avatarColor": "linear-gradient(135deg, #39905f 0%, #42358f 100%)",
       "matchMessage": "dskabeakhbvd",
-      "status": "Online recently",
+      "status": "Offline",
       "statusColor": "gray",
       "messages": [
         {
@@ -57,8 +57,8 @@
         }
       ],
       "scenarios": [],
-      "avatarImage": null,
-      "dissolved": false,
+      "avatarImage": "/uploads/8603b38f-855b-4abc-9dae-b0c1f22c4337.png",
+      "dissolved": true,
       "dissolutionMessage": "This match has been dissolved."
     },
     {
@@ -255,15 +255,10 @@
       "id": "sp3",
       "text": "Offline",
       "color": "gray"
-    },
-    {
-      "id": "b35bf19d-ca82-4605-98ab-c84d6e9da680",
-      "text": "lol",
-      "color": "#ef4444"
     }
   ],
   "actorAvatar": null,
-  "activeApp": "messenger",
+  "activeApp": "lockscreen",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
@@ -366,6 +361,12 @@
     "outgoing": "#7f1733",
     "incoming": "#e2a1a1"
   },
+  "messengerDissolveSettings": {
+    "overlayColor": "rgba(67,55,55,0.46)",
+    "text": "Match wurde gelöscht",
+    "overlayImage": "/uploads/c6d6ac36-01d0-43da-ab9d-af40ba0d0f36.png",
+    "overlayImageSize": 125
+  },
   "vfxSettings": {
     "mode": "green",
     "greenColor": "#00FF00",
@@ -391,6 +392,17 @@
     "markerSpacing": 295,
     "scrollingMarkerSpacing": 142,
     "scrollingMomentum": true
+  },
+  "lockScreenSettings": {
+    "mode": "black",
+    "showTime": true,
+    "showDate": true,
+    "customTime": null,
+    "customDate": null,
+    "showFlashlight": true,
+    "showCamera": true,
+    "backgroundImage": null,
+    "backgroundDim": 0.3
   },
   "datingAppName": " TAMIM",
   "globalScenes": [

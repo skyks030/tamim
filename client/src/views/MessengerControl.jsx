@@ -13,6 +13,7 @@ export default function MessengerControl({ socket, data }) {
     // Temp state for new status
     const [newStatusText, setNewStatusText] = useState("");
     const [newStatusColor, setNewStatusColor] = useState("gray");
+    const [showDissolveSettings, setShowDissolveSettings] = useState(false);
 
     const { chats, activeChatId, statusPresets, actorAvatar } = data; // Get global presets & actor avatar
     const selectedChat = chats.find(c => c.id === selectedChatId);
@@ -106,7 +107,7 @@ export default function MessengerControl({ socket, data }) {
     };
 
     const handleClearAvatar = (purpose) => {
-        if (confirm("Reset profile picture to default?")) {
+        if (confirm("Reset/Remove image?")) {
             socket.emit('control:clear_avatar', { purpose, chatId: selectedChatId });
         }
     };
@@ -254,6 +255,145 @@ export default function MessengerControl({ socket, data }) {
                         </div>
                     </div>
 
+                    {/* DISSOLVE SCREEN SETTINGS (Global) */}
+                    <div className="control-panel">
+                        <div
+                            style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', marginBottom: showDissolveSettings ? 15 : 0 }}
+                            onClick={() => setShowDissolveSettings(!showDissolveSettings)}
+                        >
+                            <h3>Dissolve Screen Settings</h3>
+                            <span style={{ opacity: 0.7 }}>{showDissolveSettings ? '▼' : '▶'}</span>
+                        </div>
+
+                        {showDissolveSettings && (
+                            <div className="fade-in-up">
+                                {/* Background Color & Opacity */}
+                                <div style={{ marginBottom: 15 }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>Background Overlay</label>
+                                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                        <input
+                                            type="color"
+                                            value={(() => {
+                                                const rgba = data.messengerDissolveSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                                if (rgba.startsWith('#')) return rgba;
+                                                const parts = rgba.match(/[\d.]+/g);
+                                                if (parts && parts.length >= 3) {
+                                                    const r = parseInt(parts[0]).toString(16).padStart(2, '0');
+                                                    const g = parseInt(parts[1]).toString(16).padStart(2, '0');
+                                                    const b = parseInt(parts[2]).toString(16).padStart(2, '0');
+                                                    return `#${r}${g}${b}`;
+                                                }
+                                                return "#000000";
+                                            })()}
+                                            onChange={(e) => {
+                                                const hex = e.target.value;
+                                                const currentRgba = data.messengerDissolveSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                                let alpha = 0.85;
+                                                const parts = currentRgba.match(/[\d.]+/g);
+                                                if (parts && parts.length === 4) alpha = parts[3];
+
+                                                const r = parseInt(hex.slice(1, 3), 16);
+                                                const g = parseInt(hex.slice(3, 5), 16);
+                                                const b = parseInt(hex.slice(5, 7), 16);
+
+                                                socket.emit('control:update_messenger_dissolve_settings', { overlayColor: `rgba(${r},${g},${b},${alpha})` });
+                                            }}
+                                            style={{ width: 40, height: 40, border: 'none', background: 'none', cursor: 'pointer' }}
+                                        />
+
+                                        <div style={{ flex: 1, display: 'flex', alignItems: 'center', gap: 10 }}>
+                                            <span style={{ fontSize: '0.9rem' }}>Opacity</span>
+                                            <input
+                                                type="range"
+                                                min="0"
+                                                max="100"
+                                                value={(() => {
+                                                    const rgba = data.messengerDissolveSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                                    const parts = rgba.match(/[\d.]+/g);
+                                                    return parts && parts.length === 4 ? parseFloat(parts[3]) * 100 : 85;
+                                                })()}
+                                                onChange={(e) => {
+                                                    const alpha = parseInt(e.target.value) / 100;
+                                                    const currentRgba = data.messengerDissolveSettings?.overlayColor || "rgba(0,0,0,0.85)";
+                                                    let r = 0, g = 0, b = 0;
+                                                    if (currentRgba.startsWith('#')) {
+                                                        r = parseInt(currentRgba.slice(1, 3), 16);
+                                                        g = parseInt(currentRgba.slice(3, 5), 16);
+                                                        b = parseInt(currentRgba.slice(5, 7), 16);
+                                                    } else {
+                                                        const parts = currentRgba.match(/[\d.]+/g);
+                                                        if (parts) { r = parts[0]; g = parts[1]; b = parts[2]; }
+                                                    }
+                                                    socket.emit('control:update_messenger_dissolve_settings', { overlayColor: `rgba(${r},${g},${b},${alpha})` });
+                                                }}
+                                                style={{ flex: 1 }}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Overlay Image */}
+                                <div style={{ marginBottom: 15 }}>
+                                    <label style={{ display: 'block', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>Overlay Image</label>
+                                    <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
+                                        {data.messengerDissolveSettings?.overlayImage ? (
+                                            <div style={{ width: 60, height: 60, background: `url(${data.messengerDissolveSettings.overlayImage}) center/contain no-repeat`, backgroundSize: 'contain', border: '1px solid #444', borderRadius: 4 }}></div>
+                                        ) : (
+                                            <div style={{ width: 60, height: 60, background: '#222', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#555' }}>No Img</div>
+                                        )}
+
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                                            <label className="control-btn secondary" style={{ margin: 0, padding: '6px 12px', fontSize: '0.8rem', width: 'auto', cursor: 'pointer', display: 'inline-block' }}>
+                                                Upload PNG
+                                                <input
+                                                    type="file"
+                                                    style={{ display: 'none' }}
+                                                    onChange={(e) => handleUpload(e, 'messenger-dissolve-overlay')}
+                                                />
+                                            </label>
+                                            {data.messengerDissolveSettings?.overlayImage && (
+                                                <button className="control-btn danger" style={{ width: 'auto', padding: '6px 12px', fontSize: '0.8rem', margin: 0 }}
+                                                    onClick={() => handleClearAvatar('messenger-dissolve-overlay')}
+                                                >
+                                                    Remove
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    {/* Image Size Slider */}
+                                    {data.messengerDissolveSettings?.overlayImage && (
+                                        <div style={{ marginTop: 10 }}>
+                                            <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', opacity: 0.7, marginBottom: 5 }}>
+                                                <span>Image Size</span>
+                                                <span>{data.messengerDissolveSettings?.overlayImageSize ?? 80}%</span>
+                                            </label>
+                                            <input
+                                                type="range"
+                                                min="10"
+                                                max="150"
+                                                value={data.messengerDissolveSettings?.overlayImageSize ?? 80}
+                                                onChange={(e) => socket.emit('control:update_messenger_dissolve_settings', { overlayImageSize: parseInt(e.target.value) })}
+                                                style={{ width: '100%' }}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Text */}
+                                <div style={{ marginBottom: 10 }}>
+                                    <label style={{ display: 'block', marginBottom: 5, fontSize: '0.8rem', opacity: 0.7 }}>Dissolve Text</label>
+                                    <input
+                                        className="chat-input-field"
+                                        value={data.messengerDissolveSettings?.text ?? "Match dissolved"}
+                                        onChange={(e) => socket.emit('control:update_messenger_dissolve_settings', { text: e.target.value })}
+                                        style={{ width: '100%' }}
+                                    />
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
                     {/* SIDEBAR: CHAT LIST */}
                     <div className="glass" style={{ padding: '15px', borderRadius: '16px', height: 'fit-content' }}>
                         <h3 style={{ marginTop: 0 }}>Chats</h3>
@@ -367,34 +507,7 @@ export default function MessengerControl({ socket, data }) {
                                         </div>
                                     </div>
 
-                                    {/* DISSOLVE MATCH CONTROL */}
-                                    <div style={{ padding: 10, background: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, marginBottom: 15, border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 5 }}>
-                                            <span style={{ fontSize: '0.8rem', color: '#fda4af', fontWeight: 'bold' }}>MATCH DISSOLUTION</span>
-                                            <button
-                                                className="control-btn"
-                                                onClick={() => socket.emit('control:toggle_dissolve', selectedChat.id)}
-                                                style={{
-                                                    width: 'auto', padding: '4px 8px', fontSize: '0.8rem', marginBottom: 0,
-                                                    background: selectedChat.dissolved ? '#10b981' : '#ef4444',
-                                                    borderColor: 'transparent'
-                                                }}
-                                            >
-                                                {selectedChat.dissolved ? "RESTORE CHAT" : "DISSOLVE CHAT"}
-                                            </button>
-                                        </div>
-                                        {selectedChat.dissolved && (
-                                            <div style={{ display: 'flex', gap: 10, alignItems: 'center' }}>
-                                                <span style={{ fontSize: '0.8rem', color: '#fda4af', width: 60 }}>Message:</span>
-                                                <input
-                                                    value={selectedChat.dissolutionMessage || ""}
-                                                    onChange={e => socket.emit('control:update_dissolution_message', { chatId: selectedChat.id, message: e.target.value })}
-                                                    placeholder="This match has been dissolved."
-                                                    style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid #ef4444', color: 'white', padding: 5, borderRadius: 4, fontSize: '0.9rem', flex: 1 }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
+                                    {/* DISSOLVE SECTION MOVED TO LEFT COLUMN */}
 
                                     <button
                                         className={`control-btn ${activeChatId === selectedChat.id && data.activeApp === 'messenger' ? 'primary' : 'success'}`}
@@ -420,7 +533,42 @@ export default function MessengerControl({ socket, data }) {
                                             <MessageSquare size={16} style={{ marginRight: 8 }} />
                                             Trigger Typing (3s)
                                         </button>
-                                        <button className="control-btn danger" onClick={clearChat} style={{ marginTop: 10 }}>
+
+                                        {/* Dissolve Chat Toggle */}
+                                        <div style={{ marginTop: 10, padding: 10, background: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <span style={{ fontSize: '0.8rem', color: '#fda4af', fontWeight: 'bold' }}>DISSOLVE CHAT</span>
+                                                <button
+                                                    className="control-btn"
+                                                    onClick={() => socket.emit('control:toggle_dissolve', selectedChat.id)}
+                                                    style={{
+                                                        width: 'auto', padding: '4px 10px', fontSize: '0.8rem', marginBottom: 0,
+                                                        background: selectedChat.dissolved ? '#10b981' : '#ef4444',
+                                                        border: 'none', minWidth: '80px',
+                                                        transition: 'background 0.3s ease'
+                                                    }}
+                                                >
+                                                    {selectedChat.dissolved ? "RESTORE" : "DISSOLVE"}
+                                                </button>
+                                            </div>
+
+                                            <div style={{
+                                                maxHeight: selectedChat.dissolved ? '60px' : '0px',
+                                                opacity: selectedChat.dissolved ? 1 : 0,
+                                                overflow: 'hidden',
+                                                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                                                marginTop: selectedChat.dissolved ? 10 : 0
+                                            }}>
+                                                <input
+                                                    value={selectedChat.dissolutionMessage || ""}
+                                                    onChange={e => socket.emit('control:update_dissolution_message', { chatId: selectedChat.id, message: e.target.value })}
+                                                    placeholder="Custom message..."
+                                                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid #ef4444', color: 'white', padding: '6px 10px', borderRadius: 4, fontSize: '0.9rem' }}
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <button className="control-btn danger" onClick={clearChat} style={{ marginTop: 15 }}>
                                             <Trash2 size={16} style={{ marginRight: 8 }} />
                                             DELETE ALL MESSAGES
                                         </button>

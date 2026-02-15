@@ -5,6 +5,7 @@ import MessengerView from './views/MessengerView';
 import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
 import VfxView from './views/VfxView';
+import LockScreenView from './views/LockScreenView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
@@ -57,9 +58,16 @@ function App() {
         }
 
         // Global Background Control
-        // If we are NOT in VFX mode, ensure the default dark background is set.
-        // VFX mode handles its own background in VfxView.jsx
-        if (view !== 'actor' || (data && data.activeApp !== 'vfx')) {
+        // If we are NOT in VFX mode OR Lock Screen mode, ensure the default dark background is set.
+        // VFX and Lock Screen handle their own background (or require black).
+        if (view === 'actor' && (data?.activeApp === 'vfx' || data?.activeApp === 'lockscreen')) {
+            // For VFX and LockScreen, we generally want black body
+            document.body.style.backgroundColor = '#000000';
+            document.documentElement.style.backgroundColor = '#000000';
+            const metaThemeColor = document.querySelector("meta[name='theme-color']");
+            if (metaThemeColor) metaThemeColor.setAttribute("content", "#000000");
+        } else {
+            // Default App Background (Dark Blue)
             document.body.style.backgroundColor = '#0f172a'; // matches var(--bg-dark)
             document.documentElement.style.backgroundColor = '#0f172a';
 
@@ -69,7 +77,15 @@ function App() {
         }
     }, [data, view]);
 
-    if (!data) return <div style={{ color: 'white', padding: 20 }}>Loading...</div>;
+    if (!data) return (
+        <div style={{
+            position: 'fixed', inset: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: '#0f172a', color: 'white'
+        }}>
+            Loading...
+        </div>
+    );
 
     if (view === 'landing') {
         return (
@@ -115,6 +131,9 @@ function App() {
         }
         if (data.activeApp === 'vfx') {
             return <VfxView data={data} />;
+        }
+        if (data.activeApp === 'lockscreen') {
+            return <LockScreenView data={data} />;
         }
         return <MessengerView socket={socket} data={data} />;
     };

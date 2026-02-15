@@ -19,13 +19,13 @@ body {
   background-color: var(--bg-dark);
   color: var(--text-primary);
   /* Prevent rubber banding */
-  overflow: hidden;
   width: 100%;
   height: 100%;
-  min-height: 100vh;
-  min-height: 100dvh;
-  /* min-height: -webkit-fill-available; // sometimes causes issues with 100dvh */
+  overflow: hidden;
+  /* Lock native scroll */
+  overscroll-behavior: none;
   -webkit-text-size-adjust: 100%;
+  /* Removed position: fixed from body as it causes jumps on mobile */
 }
 
 /* Reset basics */
@@ -33,15 +33,18 @@ body {
   box-sizing: border-box;
 }
 
-/* App Container for Mobile View */
+/* App Container for Mobile View - This becomes the "Window" */
 .app-container {
+  position: fixed;
+  /* Lock this container instead */
+  inset: 0;
   width: 100%;
-  height: 100%;
-  height: 100dvh;
+  height: var(--app-height, 100%);
+  /* Use JS-calculated height for stability */
   display: flex;
   flex-direction: column;
-  /* background: var(--bg-dark); Removed to allow body bg control */
   overflow: hidden;
+  z-index: 1;
 }
 
 /* Glassmorphism Utilities */

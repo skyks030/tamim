@@ -573,13 +573,12 @@ export default function MessengerView({ socket, data }) {
             {/* MATCH DISSOLUTION OVERLAY */}
             {activeChat.dissolved && (
                 <div className="fade-in-up" style={{
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
+                    position: 'fixed', // Fixed to viewport
+                    inset: 0,          // Top/Left/Right/Bottom 0
                     width: '100%',
                     height: '100%',
                     zIndex: 9999,
-                    backgroundColor: theme.primary ? `${theme.primary}CC` : 'rgba(0,0,0,0.85)', // 80% opacity primary or dark
+                    backgroundColor: data.messengerDissolveSettings?.overlayColor || 'rgba(0,0,0,0.85)',
                     backdropFilter: 'blur(5px)',
                     display: 'flex',
                     flexDirection: 'column',
@@ -587,24 +586,42 @@ export default function MessengerView({ socket, data }) {
                     justifyContent: 'center',
                     textAlign: 'center',
                     color: 'white',
-                    padding: 40
+                    padding: 40,
+                    overscrollBehavior: 'none', // Prevent bounce
+                    touchAction: 'none'         // Prevent scrolling through
                 }}>
-                    <img
-                        src="/wilted_rose.png"
-                        alt="Match Dissolved"
-                        style={{
-                            width: '150px',
-                            marginBottom: '30px',
-                            filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
-                        }}
-                    />
+                    {data.messengerDissolveSettings?.overlayImage ? (
+                        <img
+                            src={data.messengerDissolveSettings.overlayImage}
+                            alt="Match Dissolved"
+                            style={{
+                                width: `${data.messengerDissolveSettings.overlayImageSize ?? 80}%`,
+                                maxWidth: '300px',
+                                marginBottom: '30px',
+                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))',
+                                objectFit: 'contain'
+                            }}
+                        />
+                    ) : (
+                        <img
+                            src="/wilted_rose.png"
+                            alt="Match Dissolved"
+                            style={{
+                                width: '150px',
+                                marginBottom: '30px',
+                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+                            }}
+                        />
+                    )}
+
                     <h2 style={{
                         fontSize: '2rem',
                         fontWeight: 'bold',
                         margin: 0,
-                        textShadow: '0 2px 10px rgba(0,0,0,0.5)'
+                        textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                        display: data.messengerDissolveSettings?.text === "" ? 'none' : 'block'
                     }}>
-                        {activeChat.dissolutionMessage || "Match aufgelöst"}
+                        {data.messengerDissolveSettings?.text || activeChat.dissolutionMessage || "Match dissolved"}
                     </h2>
                 </div>
             )}

@@ -103,6 +103,12 @@ const INITIAL_DB = {
     background: "#000000",
     text: "#FFFFFF"
   },
+  messengerDissolveSettings: {
+    overlayColor: "rgba(0,0,0,0.85)",
+    text: "Match dissolved",
+    overlayImage: null,
+    overlayImageSize: 80
+  },
   // Phase 3: VFX Screen
   vfxSettings: {
     mode: 'green', // 'green' | 'blue' | 'custom'
@@ -114,6 +120,18 @@ const INITIAL_DB = {
     markerCountX: 5,
     markerCountY: 9,
     markerSize: 20
+  },
+  // Phase 4: Lock Screen
+  lockScreenSettings: {
+    mode: 'lock', // 'black' | 'lock'
+    showTime: true,
+    showDate: true,
+    customTime: null, // "HH:mm"
+    customDate: null, // "DD.MM.YYYY"
+    showFlashlight: true,
+    showCamera: true,
+    backgroundImage: null, // URL
+    backgroundDim: 0.3 // Opacity of overlay
   }
 };
 
@@ -338,10 +356,18 @@ io.on('connection', (socket) => {
         if (db.datingMatchSettings && db.datingMatchSettings.overlayImage) {
           deleteOldFile(db.datingMatchSettings.overlayImage);
         }
+      } else if (purpose === 'messenger-dissolve-overlay') {
+        if (db.messengerDissolveSettings && db.messengerDissolveSettings.overlayImage) {
+          deleteOldFile(db.messengerDissolveSettings.overlayImage);
+        }
+      } else if (purpose === 'lockscreen-bg') {
+        if (db.lockScreenSettings && db.lockScreenSettings.backgroundImage) {
+          deleteOldFile(db.lockScreenSettings.backgroundImage);
+        }
       }
 
       // Save File
-      if (purpose === 'dating' || purpose === 'dating-match-overlay') {
+      if (purpose === 'dating' || purpose === 'dating-match-overlay' || purpose === 'messenger-dissolve-overlay' || purpose === 'lockscreen-bg') {
         // NO COMPRESSION for Dating App (or allow PNG transparency for overlay)
         await fs.promises.writeFile(filePath, req.file.buffer);
       } else {
@@ -377,6 +403,11 @@ io.on('connection', (socket) => {
       } else if (purpose === 'dating-match-overlay') {
         if (!db.datingMatchSettings) db.datingMatchSettings = {};
         db.datingMatchSettings.overlayImage = publicUrl;
+        saveDb();
+        io.emit('data:update', db);
+      } else if (purpose === 'messenger-dissolve-overlay') {
+        if (!db.messengerDissolveSettings) db.messengerDissolveSettings = { ...INITIAL_DB.messengerDissolveSettings };
+        db.messengerDissolveSettings.overlayImage = publicUrl;
         saveDb();
         io.emit('data:update', db);
       }
@@ -707,6 +738,14 @@ io.on('connection', (socket) => {
   socket.on('control:update_dating_match_settings', (settings) => {
     if (!db.datingMatchSettings) db.datingMatchSettings = {};
     db.datingMatchSettings = { ...db.datingMatchSettings, ...settings };
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update Messenger Dissolve Settings (NEW)
+  socket.on('control:update_messenger_dissolve_settings', (settings) => {
+    if (!db.messengerDissolveSettings) db.messengerDissolveSettings = { ...INITIAL_DB.messengerDissolveSettings };
+    db.messengerDissolveSettings = { ...db.messengerDissolveSettings, ...settings };
     saveDb();
     io.emit('data:update', db);
   });
