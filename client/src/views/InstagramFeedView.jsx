@@ -1,18 +1,18 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useLayoutEffect } from 'react';
 import { ChevronLeft, MoreHorizontal, Heart, MessageCircle, Send, Bookmark } from 'lucide-react';
 
 export default function InstagramFeedView({ profile, activePostIndex, onBack }) {
     const feedRef = useRef(null);
     const postRefs = useRef([]);
 
-    // Scroll to the active post when the view opens
-    useEffect(() => {
+    // Scroll to the active post synchronously before the browser paints
+    // Since images have an explicit aspect-ratio, we don't need to wait for them to load.
+    useLayoutEffect(() => {
         if (feedRef.current && postRefs.current[activePostIndex]) {
-            setTimeout(() => {
-                postRefs.current[activePostIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
-            }, 50);
+            postRefs.current[activePostIndex].scrollIntoView({ behavior: 'auto', block: 'start' });
         }
     }, [activePostIndex]);
+
 
     return (
         <div style={{
