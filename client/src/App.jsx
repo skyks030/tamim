@@ -6,6 +6,7 @@ import ControlView from './views/ControlView';
 import DatingView from './views/DatingView';
 import VfxView from './views/VfxView';
 import LockScreenView from './views/LockScreenView';
+import InstagramView from './views/InstagramView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
@@ -59,9 +60,9 @@ function App() {
 
         // Global Background Control
         // If we are NOT in VFX mode OR Lock Screen mode, ensure the default dark background is set.
-        // VFX and Lock Screen handle their own background (or require black).
-        if (view === 'actor' && (data?.activeApp === 'vfx' || data?.activeApp === 'lockscreen')) {
-            // For VFX and LockScreen, we generally want black body
+        // VFX, Lock Screen, and Instagram handle their own background (or require black).
+        if (view === 'actor' && (data?.activeApp === 'vfx' || data?.activeApp === 'lockscreen' || data?.activeApp === 'instagram')) {
+            // For VFX, LockScreen and Instagram we generally want black body
             document.body.style.backgroundColor = '#000000';
             document.documentElement.style.backgroundColor = '#000000';
             const metaThemeColor = document.querySelector("meta[name='theme-color']");
@@ -133,7 +134,10 @@ function App() {
             return <VfxView data={data} />;
         }
         if (data.activeApp === 'lockscreen') {
-            return <LockScreenView data={data} />;
+            return <LockScreenView socket={socket} data={data} />;
+        }
+        if (data.activeApp === 'instagram') {
+            return <InstagramView socket={socket} data={data} />;
         }
         return <MessengerView socket={socket} data={data} />;
     };

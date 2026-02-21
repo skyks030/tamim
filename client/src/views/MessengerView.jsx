@@ -199,7 +199,7 @@ export default function MessengerView({ socket, data }) {
                 {/* Scrollable List Container */}
                 <div style={{
                     flex: 1,
-                    overflowY: 'auto',
+                    overflowY: 'scroll', // FORCE SCROLL ALWAYS
                     WebkitOverflowScrolling: 'touch',
                     position: 'relative'
                 }}>
@@ -329,22 +329,21 @@ export default function MessengerView({ socket, data }) {
             )}
 
             {/* Header (Fixed at Top) */}
-            <div style={{ // REMOVED glass
-                zIndex: 200,
-                position: 'absolute', // Fixed at top
-                top: 0,
-                left: 0,
-                right: 0,
+            <div style={{
+                zIndex: 9999, // High z-index to stay on top
+                position: 'fixed', // Force fixed relative to viewport
+                top: `${theme.headerTop || 10}px`, // User configurable offset (default 10)
+                left: '10px',
+                right: '10px',
+                height: '60px', // Force height to match others
                 borderRadius: '24px', // Round all corners as requested
-                margin: '10px 10px 0 10px', // Float
-                // borderBottom: '1px solid var(--glass-border)', // No border needed if solid color
                 backgroundColor: theme.primary,
                 display: 'flex',
                 alignItems: 'center',
                 padding: '10px 15px',
                 gap: '15px',
                 color: 'white',
-                height: '60px' // Force height to match others
+                boxShadow: '0 4px 12px rgba(0,0,0,0.1)' // Add shadow for depth
             }}>
                 <div onClick={handleBack} style={{ cursor: 'pointer' }}>
                     <ChevronLeft color="white" size={28} />
@@ -374,7 +373,7 @@ export default function MessengerView({ socket, data }) {
                 height: '100%',
                 minHeight: 0 // Flexbox nesting fix
             }}>
-                {/* Unified Sliding Wrapper */}
+                {/* Unified Flex Wrapper (No Transforms) */}
                 <div
                     className="sliding-wrapper"
                     style={{
@@ -382,13 +381,9 @@ export default function MessengerView({ socket, data }) {
                         height: '100%',
                         display: 'flex',
                         flexDirection: 'column',
-                        justifyContent: 'flex-end',
+                        // justifyContent: 'flex-end', // Let flex-flow handle it
                         position: 'relative',
-                        // Slide the entire container up by Keyboard Height + Keyboard Bottom Margin (280 + 30 + safe area approx)
-                        // Using -320px to be safe and lift it nicely
-                        transform: isKeyboardVisible ? 'translateY(-320px)' : 'none',
-                        transition: 'transform 0.8s cubic-bezier(0.32, 0.72, 0, 1)',
-                        willChange: 'transform'
+                        // REMOVED transform - rely on Flexbox resizing
                     }}
                     // SWIPE LOGIC: Swipe DOWN to close keyboard
                     onTouchStart={(e) => {
@@ -407,36 +402,34 @@ export default function MessengerView({ socket, data }) {
                         if (isKeyboardVisible) setIsKeyboardVisible(false);
                     }}
                 >
-                    {/* Messages Area */}
+                    {/* Messages Area - REFACTORED FOR SCROLLING */}
                     <div
                         className="chat-messages"
                         style={{
+                            flex: 1,
                             display: 'flex',
                             flexDirection: 'column',
-                            flex: 1,
-                            // SCROLL FIX: Force scrollbar and touch behavior
-                            overflowY: 'scroll',
+                            overflowY: 'scroll',        // MUST be scroll to allow scrolling
+                            overflowX: 'hidden',
                             WebkitOverflowScrolling: 'touch',
-                            paddingBottom: '0px',
+                            height: '100%',             // Fill the flex parent
+                            position: 'relative',
+                            // PADDING RESTORED (removed padding: 0) and handled via padding-bottom/top spacing in inner
+                            scrollBehavior: 'smooth'
                         }}
                     >
-                        {/* SCROLL WRAPPER */}
+                        {/* SCROLL WRAPPER - Inner content that grows */}
                         <div style={{
-                            flex: 1,
                             display: 'flex',
                             flexDirection: 'column',
-                            justifyContent: 'flex-start', // Messages start from top
+                            justifyContent: 'flex-start',
                             width: '100%',
-                            gap: '15px',
-                            paddingTop: '80px', // Adjusted for Fixed Header (60px + margins)
-                            paddingBottom: '20px',
+                            minHeight: 'calc(100% + 1px)', // Force overscroll
+                            paddingTop: `${(theme.headerTop || 10) + 70}px`, // Header space
+                            paddingBottom: '20px', // Default bottom padding
+                            gap: '15px'
                         }}>
-                            {/* Top Spacer: Pushes content DOWN when keyboard is OPEN */}
-                            <div style={{
-                                flexGrow: isKeyboardVisible ? 1 : 0,
-                                minHeight: 0,
-                                transition: 'flex-grow 0.8s cubic-bezier(0.32, 0.72, 0, 1)'
-                            }} />
+                            {/* No top spacer needed here, content just flows */}
 
                             {activeChat.messages.map((msg, index) => {
                                 if (msg.system) {
@@ -445,7 +438,8 @@ export default function MessengerView({ socket, data }) {
                                             textAlign: 'center',
                                             color: 'var(--text-secondary)',
                                             fontSize: '0.8rem',
-                                            margin: '10px 0'
+                                            margin: '10px 0',
+                                            flexShrink: 0
                                         }}>
                                             {msg.text}
                                         </div>
@@ -455,6 +449,7 @@ export default function MessengerView({ socket, data }) {
                                     <div
                                         key={msg.id}
                                         className={`message ${msg.sender} fade-in-up`}
+                                        style={{ flexShrink: 0 }}
                                     >
                                         {msg.text}
                                     </div>
@@ -462,47 +457,40 @@ export default function MessengerView({ socket, data }) {
                             })}
 
                             {isTyping && (
-                                <div className="typing-indicator fade-in-up">
+                                <div className="typing-indicator fade-in-up" style={{ flexShrink: 0 }}>
                                     <div className="dot"></div>
                                     <div className="dot"></div>
                                     <div className="dot"></div>
                                 </div>
                             )}
 
-                            {/* Bottom Spacer: Pushes content UP when keyboard is CLOSED */}
-                            <div style={{
-                                flexGrow: isKeyboardVisible ? 0 : 1,
-                                minHeight: 0,
-                                transition: 'flex-grow 0.8s cubic-bezier(0.32, 0.72, 0, 1)'
-                            }} />
-
-                            <div ref={messagesEndRef} style={{ height: 1, width: '100%', minHeight: '1px' }} />
+                            <div ref={messagesEndRef} style={{ height: 1, width: '100%', minHeight: '1px', flexShrink: 0 }} />
                         </div>
                     </div>
 
-                    {/* Input Area (Flow, attached to keyboard) */}
+                    {/* Input Area (Flow, sits above keyboard) */}
                     <div
-                        className="chat-input-area" // REMOVED glass
+                        className="chat-input-area"
                         onClick={(e) => {
                             e.stopPropagation();
                             setIsKeyboardVisible(true);
                         }}
                         style={{
                             position: 'relative',
-                            flexShrink: 0,
                             zIndex: 10,
-
+                            flexShrink: 0, // Don't shrink input
                             // borderTop: '1px solid rgba(255,255,255,0.1)',
                             paddingBottom: '10px',
-                            width: 'calc(100% - 20px)', // Reduce width for float
-                            margin: '0 10px 30px 10px', // Lift input up (30px bottom)
-                            borderRadius: '24px', // Rounded corners
+                            width: 'calc(100% - 20px)',
+                            margin: '0 10px 10px 10px', // Lift input up slightly
+                            borderRadius: '24px',
                             display: 'flex',
                             alignItems: 'center',
                             paddingLeft: '15px',
                             paddingRight: '15px',
                             backgroundColor: theme.primary,
-                            paddingTop: '10px' // Add padding top since we removed class
+                            paddingTop: '10px',
+                            transition: 'margin-bottom 0.3s ease' // Smooth transition if needed
                         }}
                     >
                         <div
@@ -551,18 +539,18 @@ export default function MessengerView({ socket, data }) {
                         </button>
                     </div>
 
-                    {/* Keyboard (Absolute position below wrapper) */}
+                    {/* Keyboard (Flow, pushes content up via Flex) */}
                     <div style={{
-                        position: 'absolute',
-                        top: '100%',
-                        left: 0,
+                        height: isKeyboardVisible ? '300px' : '0px', // Animate Height
+                        overflow: 'hidden',
+                        transition: 'height 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
                         width: '100%',
-                        // DISPLAY FIX: Remove from DOM tree entirely when closed to prevent layout ghosts
-                        display: isKeyboardVisible ? 'block' : 'none',
+                        flexShrink: 0,
+                        backgroundColor: '#1c1c1e' // Match KB color to avoid gaps
                     }}>
                         <VirtualKeyboard
-                            isActive={isKeyboardVisible}
-                            value={localInputValue} // Pass controlled value
+                            isActive={true} // Always render, hide via container height
+                            value={localInputValue}
                             onChange={handleKeyboardChange}
                             onSend={handleVirtualSend}
                         />

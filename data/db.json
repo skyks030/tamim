@@ -47,6 +47,71 @@
           "id": 1771167857521,
           "text": "djjd",
           "sender": "me"
+        },
+        {
+          "id": 1771172790892,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172791341,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172791781,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172792166,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172792594,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172793071,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172793590,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172794229,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172798594,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172799536,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172800340,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172801012,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771172802124,
+          "text": "Hey! 👋",
+          "sender": "match"
         }
       ],
       "presets": [
@@ -58,7 +123,7 @@
       ],
       "scenarios": [],
       "avatarImage": "/uploads/8603b38f-855b-4abc-9dae-b0c1f22c4337.png",
-      "dissolved": true,
+      "dissolved": false,
       "dissolutionMessage": "This match has been dissolved."
     },
     {
@@ -73,6 +138,71 @@
           "id": 1770639957805,
           "text": "fdböojrb a",
           "system": true
+        },
+        {
+          "id": 1771173104618,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173105091,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173105383,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173105687,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173105926,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173106145,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173106376,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173106618,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173106841,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173107100,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173107373,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173107946,
+          "text": "Hey! 👋",
+          "sender": "match"
+        },
+        {
+          "id": 1771173108441,
+          "text": "Hey! 👋",
+          "sender": "match"
         }
       ],
       "presets": [
@@ -244,7 +374,7 @@
       "dissolutionMessage": "This match has been dissolved."
     }
   ],
-  "activeChatId": "ca6109aa-a4df-4d00-81c1-db4fb0921d97",
+  "activeChatId": "2f780b21-bbeb-4d3f-aa00-f5ce2acc0f04",
   "statusPresets": [
     {
       "id": "sp1",
@@ -258,7 +388,7 @@
     }
   ],
   "actorAvatar": null,
-  "activeApp": "lockscreen",
+  "activeApp": "instagram",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
@@ -359,7 +489,8 @@
     "text": "#FFFFFF",
     "messageText": "#ffffff",
     "outgoing": "#7f1733",
-    "incoming": "#e2a1a1"
+    "incoming": "#e2a1a1",
+    "headerTop": 33
   },
   "messengerDissolveSettings": {
     "overlayColor": "rgba(67,55,55,0.46)",
@@ -394,16 +525,178 @@
     "scrollingMomentum": true
   },
   "lockScreenSettings": {
-    "mode": "black",
+    "mode": "lock",
     "showTime": true,
     "showDate": true,
-    "customTime": null,
-    "customDate": null,
+    "customTime": "",
+    "customDate": "",
     "showFlashlight": true,
     "showCamera": true,
-    "backgroundImage": null,
-    "backgroundDim": 0.3
+    "backgroundImage": "/uploads/09b5dcfe-1342-47d4-9c95-b056070910de.jpeg",
+    "backgroundDim": 0.4,
+    "timeOffset": 80,
+    "showCall": false,
+    "callName": "",
+    "callOffset": 35,
+    "callImage": "/uploads/d76f72d3-3ed7-4ab5-9cee-d755270bbb40.jpeg",
+    "showHomeBar": true,
+    "callDim": 0.4,
+    "callBlur": 3,
+    "notifications": [
+      {
+        "id": "1771589358361",
+        "sender": "Mia",
+        "message": "lol",
+        "time": "Jetzt"
+      },
+      {
+        "id": "1771589360987",
+        "sender": "Shara",
+        "message": "hey wie gehts?",
+        "time": "vor 1 Min"
+      },
+      {
+        "id": "1771589361495",
+        "sender": "Ben",
+        "message": "bla bla bla",
+        "time": "gestern"
+      }
+    ]
   },
+  "activeInstagramProfileId": "demo-1",
+  "instagramProfiles": [
+    {
+      "id": "demo-1",
+      "name": "username",
+      "displayName": "User Name",
+      "backgroundColor": "#000000",
+      "bio": "Welcome to your new profile.\nEdit this bio in the control panel.",
+      "followers": "10.5k",
+      "following": "128",
+      "posts": "6",
+      "avatar": null,
+      "gridPhotos": [
+        {
+          "id": "2",
+          "url": "/uploads/e26bc77a-a720-46bc-ac72-429a8f967d4e.jpeg",
+          "color": "#aaffaa"
+        },
+        {
+          "id": "3",
+          "url": null,
+          "color": "#aaaaff"
+        },
+        {
+          "id": "4",
+          "url": null,
+          "color": "#ffffaa"
+        },
+        {
+          "id": "5",
+          "url": null,
+          "color": "#ffaaff"
+        },
+        {
+          "id": "6",
+          "url": null,
+          "color": "#aaffff"
+        },
+        {
+          "id": "1771597453367",
+          "url": null,
+          "color": "#facade"
+        },
+        {
+          "id": "1771597454349",
+          "url": null,
+          "color": "#decaf0"
+        },
+        {
+          "id": "1771597454680",
+          "url": null,
+          "color": "#ffaaaa"
+        },
+        {
+          "id": "1771597454957",
+          "url": null,
+          "color": "#aaffaa"
+        },
+        {
+          "id": "1771597455236",
+          "url": null,
+          "color": "#aaaaff"
+        },
+        {
+          "id": "1771597455494",
+          "url": null,
+          "color": "#ffffaa"
+        },
+        {
+          "id": "1771597455749",
+          "url": null,
+          "color": "#ffaaff"
+        },
+        {
+          "id": "1771597456316",
+          "url": null,
+          "color": "#aaffff"
+        },
+        {
+          "id": "1771597456550",
+          "url": null,
+          "color": "#facade"
+        },
+        {
+          "id": "1771695888953",
+          "url": null,
+          "color": "#facade"
+        }
+      ],
+      "isFollowing": false
+    },
+    {
+      "id": "profile-1771594678881",
+      "name": "new_user",
+      "displayName": "New Profile",
+      "bio": "Bio goes here...",
+      "followers": "0",
+      "following": "0",
+      "posts": "6",
+      "avatar": null,
+      "gridPhotos": [
+        {
+          "id": "1",
+          "url": null,
+          "color": "#ffaaaa"
+        },
+        {
+          "id": "2",
+          "url": null,
+          "color": "#aaffaa"
+        },
+        {
+          "id": "3",
+          "url": null,
+          "color": "#aaaaff"
+        },
+        {
+          "id": "4",
+          "url": null,
+          "color": "#ffffaa"
+        },
+        {
+          "id": "5",
+          "url": null,
+          "color": "#ffaaff"
+        },
+        {
+          "id": "6",
+          "url": null,
+          "color": "#aaffff"
+        }
+      ]
+    }
+  ],
   "datingAppName": " TAMIM",
   "globalScenes": [
     {
@@ -2196,7 +2489,579 @@
         "datingAppName": "LOVE ME!!!"
       },
       "timestamp": 1770986662969
+    },
+    {
+      "id": "41d353ba-4eb3-4e50-9a5f-c5760c11fc4c",
+      "name": "rjefvn",
+      "data": {
+        "chats": [
+          {
+            "id": "ca6109aa-a4df-4d00-81c1-db4fb0921d97",
+            "name": "jaeeahfb",
+            "avatarColor": "linear-gradient(135deg, #39905f 0%, #42358f 100%)",
+            "matchMessage": "dskabeakhbvd",
+            "status": "Offline",
+            "statusColor": "gray",
+            "messages": [
+              {
+                "id": 1770639957087,
+                "text": "dskabeakhbvd",
+                "system": true
+              },
+              {
+                "id": 1770980768176,
+                "text": "gh",
+                "sender": "me"
+              },
+              {
+                "id": 1770981701915,
+                "text": "ghjjhg",
+                "sender": "me"
+              },
+              {
+                "id": 1770983594033,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771167851462,
+                "text": "djdjjdj",
+                "sender": "me"
+              },
+              {
+                "id": 1771167853990,
+                "text": "jjdkgk",
+                "sender": "me"
+              },
+              {
+                "id": 1771167855902,
+                "text": "djfl",
+                "sender": "me"
+              },
+              {
+                "id": 1771167857521,
+                "text": "djjd",
+                "sender": "me"
+              },
+              {
+                "id": 1771172790892,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172791341,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172791781,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172792166,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172792594,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172793071,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172793590,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172794229,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172798594,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172799536,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172800340,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172801012,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771172802124,
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "presets": [
+              {
+                "id": "4a451032-0f01-4e1c-a85b-26e1d977a16f",
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": "/uploads/8603b38f-855b-4abc-9dae-b0c1f22c4337.png",
+            "dissolved": false,
+            "dissolutionMessage": "This match has been dissolved."
+          },
+          {
+            "id": "7f45f25d-a9ee-402d-9bc1-a167d0e18ad0",
+            "name": "jkdglk",
+            "avatarColor": "linear-gradient(135deg, #ca9ebc 0%, #35973 100%)",
+            "matchMessage": "fdböojrb a",
+            "status": "Online recently",
+            "statusColor": "gray",
+            "messages": [
+              {
+                "id": 1770639957805,
+                "text": "fdböojrb a",
+                "system": true
+              },
+              {
+                "id": 1771173104618,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173105091,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173105383,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173105687,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173105926,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173106145,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173106376,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173106618,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173106841,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173107100,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173107373,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173107946,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1771173108441,
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "presets": [
+              {
+                "id": "fe36435a-74b4-4d1e-ae43-f40c86dbddc4",
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": null
+          },
+          {
+            "id": "a58a5c9f-173d-4efd-8d1c-71a5ccd8db7f",
+            "name": "New Match",
+            "avatarColor": "linear-gradient(135deg, #f679b3 0%, #39eae1 100%)",
+            "matchMessage": "You matched with New Match! 💖",
+            "status": "Online recently",
+            "statusColor": "gray",
+            "messages": [
+              {
+                "id": 1770640281287,
+                "text": "You matched with New Match! 💖",
+                "system": true
+              }
+            ],
+            "presets": [
+              {
+                "id": "b753feb1-f254-4114-a260-b815be18c04b",
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": null
+          },
+          {
+            "id": "1e158184-f00a-4fb8-b233-87fb1a2edb7c",
+            "name": "New Match",
+            "avatarColor": "linear-gradient(135deg, #bd7aa4 0%, #681c5f 100%)",
+            "matchMessage": "You matched with New Match! 💖",
+            "status": "Online recently",
+            "statusColor": "gray",
+            "messages": [
+              {
+                "id": 1770640281671,
+                "text": "You matched with New Match! 💖",
+                "system": true
+              }
+            ],
+            "presets": [
+              {
+                "id": "299371cc-4b60-4dda-b476-bef51b2892b2",
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": null
+          },
+          {
+            "id": "352c5e87-1143-4920-a1fb-ea7b5694a4d0",
+            "name": "Test Chat",
+            "avatarColor": "linear-gradient(135deg, #5a6710 0%, #210398 100%)",
+            "matchMessage": "You matched with Test Chat! 💖",
+            "status": "Online recently",
+            "statusColor": "gray",
+            "messages": [
+              {
+                "id": 1770979045125,
+                "text": "You matched with Test Chat! 💖",
+                "system": true
+              }
+            ],
+            "presets": [
+              {
+                "id": "5f6759c0-7217-418a-8625-b407c013cd76",
+                "text": "Hey! 👋",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": null
+          },
+          {
+            "id": "2f780b21-bbeb-4d3f-aa00-f5ce2acc0f04",
+            "name": "Zven",
+            "avatarColor": "linear-gradient(135deg, #23362e 0%, #edf0ed 100%)",
+            "matchMessage": "You matched with Zven",
+            "status": "Online",
+            "statusColor": "#4ade80",
+            "messages": [
+              {
+                "id": 1770985703042,
+                "text": "You matched with Zven",
+                "system": true
+              },
+              {
+                "id": 1770985864570,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1770985875619,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1770985883159,
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": 1770985887970,
+                "text": "zblhdjvba",
+                "sender": "match"
+              },
+              {
+                "id": 1770985889092,
+                "text": "zblhdjvba",
+                "sender": "match"
+              },
+              {
+                "id": 1770985895908,
+                "text": "hjbfdalhb",
+                "sender": "me"
+              },
+              {
+                "id": 1770985903720,
+                "text": "hjbfdalhb",
+                "sender": "me"
+              },
+              {
+                "id": 1770985904369,
+                "text": "zblhdjvba",
+                "sender": "match"
+              },
+              {
+                "id": 1770986753351,
+                "text": "https://meet.google.com/hux-vfhb-iur",
+                "sender": "match"
+              }
+            ],
+            "presets": [
+              {
+                "id": "56b5a825-bccd-4273-aa6d-c033fd949cd2",
+                "text": "Hey! 👋",
+                "sender": "match"
+              },
+              {
+                "id": "8ff94c3b-0c0c-42c1-a833-271d8fdf4b4f",
+                "text": "zblhdjvba",
+                "sender": "match"
+              },
+              {
+                "id": "0cb222a3-0a9f-402f-a86a-8a6c3aa1106a",
+                "text": "hjbfdalhb",
+                "sender": "me"
+              },
+              {
+                "id": "9c456419-fe0a-46b6-92a7-3b8ad8cf7ec8",
+                "text": "https://meet.google.com/hux-vfhb-iur",
+                "sender": "match"
+              }
+            ],
+            "scenarios": [],
+            "avatarImage": "/uploads/5f025436-030e-4462-9cd0-0020f201af76.jpeg",
+            "dissolved": false,
+            "dissolutionMessage": "This match has been dissolved."
+          }
+        ],
+        "activeChatId": "2f780b21-bbeb-4d3f-aa00-f5ce2acc0f04",
+        "statusPresets": [
+          {
+            "id": "sp1",
+            "text": "Online",
+            "color": "#4ade80"
+          },
+          {
+            "id": "sp3",
+            "text": "Offline",
+            "color": "gray"
+          }
+        ],
+        "actorAvatar": null,
+        "activeApp": "lockscreen",
+        "datingProfiles": [
+          {
+            "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
+            "name": "Zven",
+            "age": "23",
+            "bio": "looool",
+            "imageUrl": "/uploads/4e27c057-b63a-4e44-b357-7b0d62855e4e.jpeg",
+            "avatarColor": "linear-gradient(135deg, #d431de 0%, #75709b 100%)",
+            "isMatch": true
+          },
+          {
+            "id": "524dd98f-3096-47d9-a4a3-7455625c5650",
+            "name": "sv",
+            "age": "23",
+            "bio": "sdagev",
+            "imageUrl": "/uploads/8faf1bf1-4576-4950-bb76-d405e7842255.jpeg",
+            "avatarColor": "linear-gradient(135deg, #f27e0f 0%, #10f349 100%)",
+            "isMatch": true
+          },
+          {
+            "id": "ce082ab5-07ff-44da-ac20-b548cb39d268",
+            "name": "Mateo",
+            "age": "21",
+            "bio": "Reiten",
+            "imageUrl": "/uploads/2d616bc1-f5d9-4c13-bf64-d6132902911c.jpeg",
+            "avatarColor": "linear-gradient(135deg, #51d030 0%, #502ec4 100%)",
+            "isMatch": true
+          },
+          {
+            "id": "80e39895-26d9-4b02-9a39-f3a09cc72b10",
+            "name": "ben ",
+            "age": "12",
+            "bio": "malen",
+            "imageUrl": "/uploads/b46ae9d4-6821-4b7e-9c4f-f57a27e04dd4.jpeg",
+            "avatarColor": "linear-gradient(135deg, #d984f6 0%, #78a3d 100%)",
+            "isMatch": true
+          }
+        ],
+        "activeDatingProfileId": "ce082ab5-07ff-44da-ac20-b548cb39d268",
+        "datingScenarios": [
+          {
+            "id": "8babb727-776b-4187-840a-0a65cf4ec6ce",
+            "name": "sdfewfv",
+            "profiles": [
+              {
+                "id": "5d89b577-fff5-401c-b8b2-de78d65451cf",
+                "name": "hh",
+                "age": "23",
+                "bio": "",
+                "imageUrl": "/uploads/159af170-1c2c-450b-96a2-61dc86d0b651.jpeg",
+                "avatarColor": "linear-gradient(135deg, #f6b71f 0%, #8bed65 100%)",
+                "isMatch": true
+              }
+            ],
+            "actorAvatar": "/uploads/b243de28-b1ac-46a3-b5a1-ad7b274c7fc2.jpeg"
+          },
+          {
+            "id": "210af563-3bf8-43f7-bec0-7c7646be9035",
+            "name": "efw",
+            "profiles": [
+              {
+                "id": "5d89b577-fff5-401c-b8b2-de78d65451cf",
+                "name": "hh",
+                "age": "23",
+                "bio": "",
+                "imageUrl": "/uploads/159af170-1c2c-450b-96a2-61dc86d0b651.jpeg",
+                "avatarColor": "linear-gradient(135deg, #f6b71f 0%, #8bed65 100%)",
+                "isMatch": false
+              },
+              {
+                "id": "48a7c5ed-e1d8-4cfd-8e79-afc050728522",
+                "name": "wdsc",
+                "age": "23",
+                "bio": "",
+                "imageUrl": "/uploads/8c08ec39-b60b-45ae-b583-14fa0fb9230c.jpeg",
+                "avatarColor": "linear-gradient(135deg, #c4d578 0%, #eaace7 100%)",
+                "isMatch": true
+              }
+            ],
+            "actorAvatar": "/uploads/b243de28-b1ac-46a3-b5a1-ad7b274c7fc2.jpeg"
+          }
+        ],
+        "datingTheme": {
+          "primary": "#cd8b80",
+          "background": "#7f1733",
+          "text": "#ffffff"
+        },
+        "datingMatchSettings": {
+          "overlayColor": "rgba(178,98,118,0.75)",
+          "title": "It's a Match!",
+          "subtitle": "You and {name} liked each other.",
+          "overlayImage": "/uploads/8fa20f78-dfce-4227-9e92-3b36387e04f3.png",
+          "overlayImageSize": 97
+        },
+        "messengerTheme": {
+          "primary": "#73112b",
+          "background": "#b96a6a",
+          "text": "#FFFFFF",
+          "messageText": "#ffffff",
+          "outgoing": "#7f1733",
+          "incoming": "#e2a1a1",
+          "headerTop": 33
+        },
+        "messengerDissolveSettings": {
+          "overlayColor": "rgba(67,55,55,0.46)",
+          "text": "Match wurde gelöscht",
+          "overlayImage": "/uploads/c6d6ac36-01d0-43da-ab9d-af40ba0d0f36.png",
+          "overlayImageSize": 125
+        },
+        "vfxSettings": {
+          "mode": "green",
+          "greenColor": "#00FF00",
+          "blueColor": "#0000FF",
+          "customColor": "#FF00FF",
+          "markersEnabled": true,
+          "markerColor": "#000000",
+          "markerCountX": 2,
+          "markerCountY": 3,
+          "markerSize": 55,
+          "scrollingMarkersEnabled": true,
+          "scrollingMarkerColor": "#000000",
+          "scrollDirection": "vertical",
+          "scrollingMarkerSize": 37,
+          "scrollingMarkerCountY": 1,
+          "scrollingMarkerCountX": 2,
+          "markerLayoutMode": "count",
+          "markerSpacingY": 142,
+          "markerSpacingX": 178,
+          "scrollingLayoutMode": "spacing",
+          "scrollingMarkerSpacingY": 185,
+          "scrollingMarkerSpacingX": 158,
+          "markerSpacing": 295,
+          "scrollingMarkerSpacing": 142,
+          "scrollingMomentum": true
+        },
+        "lockScreenSettings": {
+          "mode": "lock",
+          "showTime": true,
+          "showDate": true,
+          "customTime": "",
+          "customDate": "",
+          "showFlashlight": true,
+          "showCamera": true,
+          "backgroundImage": "/uploads/09b5dcfe-1342-47d4-9c95-b056070910de.jpeg",
+          "backgroundDim": 0.4,
+          "timeOffset": 105,
+          "showCall": false,
+          "callName": "",
+          "callOffset": 35,
+          "callImage": "/uploads/d76f72d3-3ed7-4ab5-9cee-d755270bbb40.jpeg",
+          "showHomeBar": true,
+          "callDim": 0.4,
+          "callBlur": 3,
+          "notifications": [
+            {
+              "id": "1771589358361",
+              "sender": "Mia",
+              "message": "lol",
+              "time": "Jetzt"
+            },
+            {
+              "id": "1771589360987",
+              "sender": "Shara",
+              "message": "hey wie gehts?",
+              "time": "vor 1 Min"
+            },
+            {
+              "id": "1771589361495",
+              "sender": "Ben",
+              "message": "bla bla bla",
+              "time": "gestern"
+            }
+          ]
+        },
+        "datingAppName": " TAMIM"
+      },
+      "timestamp": 1771589640634
     }
   ],
-  "activeGlobalSceneId": "3af46274-75f4-46cc-8e0d-23c21cba3595"
+  "activeGlobalSceneId": "41d353ba-4eb3-4e50-9a5f-c5760c11fc4c"
 }

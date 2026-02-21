@@ -130,9 +130,42 @@ const INITIAL_DB = {
     customDate: null, // "DD.MM.YYYY"
     showFlashlight: true,
     showCamera: true,
+    showHomeBar: true,
     backgroundImage: null, // URL
-    backgroundDim: 0.3 // Opacity of overlay
-  }
+    backgroundDim: 0.3, // Opacity of overlay
+    timeOffset: 60,
+    showCall: false, // Call Overlay state
+    callName: "Sarah", // Name of the caller
+    callImage: null, // Caller background image
+    callOffset: 40, // Call caller name margin offset
+    callDim: 0.3, // Opacity overlay for call background
+    callBlur: 0, // Blur for call background
+    notifications: [] // Array of static notifications { id, sender, message, time }
+  },
+  // Phase 5: Instagram
+  activeInstagramProfileId: 'demo-1',
+  instagramProfiles: [
+    {
+      id: 'demo-1',
+      name: 'username',
+      displayName: 'User Name',
+      backgroundColor: '#000000',
+      isFollowing: true,
+      bio: 'Welcome to your new profile.\nEdit this bio in the control panel.',
+      followers: '10.5k',
+      following: '128',
+      posts: '6',
+      avatar: null, // URL
+      gridPhotos: [
+        { id: '1', url: null, color: '#ffaaaa' },
+        { id: '2', url: null, color: '#aaffaa' },
+        { id: '3', url: null, color: '#aaaaff' },
+        { id: '4', url: null, color: '#ffffaa' },
+        { id: '5', url: null, color: '#ffaaff' },
+        { id: '6', url: null, color: '#aaffff' }
+      ]
+    }
+  ]
 };
 
 let db = { ...INITIAL_DB };
@@ -364,10 +397,14 @@ io.on('connection', (socket) => {
         if (db.lockScreenSettings && db.lockScreenSettings.backgroundImage) {
           deleteOldFile(db.lockScreenSettings.backgroundImage);
         }
+      } else if (purpose === 'lockscreen-call-bg') {
+        if (db.lockScreenSettings && db.lockScreenSettings.callImage) {
+          deleteOldFile(db.lockScreenSettings.callImage);
+        }
       }
 
       // Save File
-      if (purpose === 'dating' || purpose === 'dating-match-overlay' || purpose === 'messenger-dissolve-overlay' || purpose === 'lockscreen-bg') {
+      if (purpose === 'dating' || purpose === 'dating-match-overlay' || purpose === 'messenger-dissolve-overlay' || purpose === 'lockscreen-bg' || purpose === 'lockscreen-call-bg' || purpose === 'instagram-avatar' || purpose === 'instagram-grid') {
         // NO COMPRESSION for Dating App (or allow PNG transparency for overlay)
         await fs.promises.writeFile(filePath, req.file.buffer);
       } else {
@@ -410,6 +447,36 @@ io.on('connection', (socket) => {
         db.messengerDissolveSettings.overlayImage = publicUrl;
         saveDb();
         io.emit('data:update', db);
+      } else if (purpose === 'lockscreen-bg') {
+        if (!db.lockScreenSettings) db.lockScreenSettings = { ...INITIAL_DB.lockScreenSettings };
+        db.lockScreenSettings.backgroundImage = publicUrl;
+        saveDb();
+        io.emit('data:update', db);
+      } else if (purpose === 'lockscreen-call-bg') {
+        if (!db.lockScreenSettings) db.lockScreenSettings = { ...INITIAL_DB.lockScreenSettings };
+        db.lockScreenSettings.callImage = publicUrl;
+        saveDb();
+        io.emit('data:update', db);
+      } else if (purpose === 'instagram-avatar') {
+        const profileId = req.body.profileId;
+        const profile = db.instagramProfiles.find(p => p.id === profileId);
+        if (profile) {
+          profile.avatar = publicUrl;
+          saveDb();
+          io.emit('data:update', db);
+        }
+      } else if (purpose === 'instagram-grid') {
+        const profileId = req.body.profileId;
+        const photoId = req.body.photoId;
+        const profile = db.instagramProfiles.find(p => p.id === profileId);
+        if (profile) {
+          const photo = profile.gridPhotos.find(p => p.id === photoId);
+          if (photo) {
+            photo.url = publicUrl;
+            saveDb();
+            io.emit('data:update', db);
+          }
+        }
       }
 
       res.json({ success: true, url: publicUrl });
@@ -445,8 +512,41 @@ io.on('connection', (socket) => {
         saveDb();
         io.emit('data:update', db);
       }
+    } else if (purpose === 'lockscreen-bg') {
+      if (db.lockScreenSettings) {
+        db.lockScreenSettings.backgroundImage = null;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    } else if (purpose === 'lockscreen-call-bg') {
+      if (db.lockScreenSettings) {
+        db.lockScreenSettings.callImage = null;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    } else if (purpose === 'instagram-avatar') {
+      const profileId = req.body?.profileId || chatId; // Support both sending styles temporarily if needed
+      const profile = db.instagramProfiles.find(p => p.id === profileId);
+      if (profile) {
+        profile.avatar = null;
+        saveDb();
+        io.emit('data:update', db);
+      }
+    } else if (purpose === 'instagram-grid') {
+      const profileId = req.body?.profileId || args?.profileId;
+      const photoId = req.body?.photoId || args?.photoId;
+      const profile = db.instagramProfiles.find(p => p.id === profileId);
+      if (profile) {
+        const photo = profile.gridPhotos.find(p => p.id === photoId);
+        if (photo) {
+          photo.url = null;
+          saveDb();
+          io.emit('data:update', db);
+        }
+      }
     }
   });
+
 
   // Add Preset (Enhanced)
   socket.on('control:save_preset', ({ chatId, text, sender }) => {
@@ -611,6 +711,13 @@ io.on('connection', (socket) => {
     io.emit('data:update', db);
   });
 
+  // --- INSTAGRAM EVENTS ---
+  socket.on('control:update_instagram', (updates) => {
+    Object.assign(db, updates);
+    saveDb();
+    io.emit('data:update', db);
+  });
+
   // --- DATING APP EVENTS ---
 
   // Create Profile
@@ -760,6 +867,14 @@ io.on('connection', (socket) => {
   // Update VFX Settings
   socket.on('control:update_vfx_settings', (settings) => {
     db.vfxSettings = { ...db.vfxSettings, ...settings };
+    saveDb();
+    io.emit('data:update', db);
+  });
+
+  // Update Lockscreen Settings
+  socket.on('control:update_lockscreen_settings', (settings) => {
+    if (!db.lockScreenSettings) db.lockScreenSettings = { ...INITIAL_DB.lockScreenSettings };
+    db.lockScreenSettings = { ...db.lockScreenSettings, ...settings };
     saveDb();
     io.emit('data:update', db);
   });

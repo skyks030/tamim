@@ -138,7 +138,11 @@ body {
 .chat-messages {
   flex: 1;
   padding: 20px;
-  overflow-y: auto;
+  overflow-y: scroll;
+  /* Allow scroll */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+  /* Prevent chaining to parent but allow local bounce */
   display: flex;
   flex-direction: column;
   gap: 15px;
