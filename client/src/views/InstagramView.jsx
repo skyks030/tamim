@@ -1,5 +1,6 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { ChevronLeft, MoreHorizontal, CheckCircle, ChevronDown } from 'lucide-react';
+import InstagramFeedView from './InstagramFeedView';
 
 export default function InstagramView({ data }) {
     const { instagramProfiles = [], activeInstagramProfileId } = data;
@@ -11,7 +12,19 @@ export default function InstagramView({ data }) {
         if (scrollRef.current) scrollRef.current.scrollTop = 0;
     }, [activeInstagramProfileId]);
 
+    // Track which post is active for the Feed View. If null, show Grid.
+    const [activePostIndex, setActivePostIndex] = useState(null);
+
+    // Reset view if profile changes
+    useEffect(() => {
+        setActivePostIndex(null);
+    }, [activeInstagramProfileId]);
+
     if (!profile) return <div style={{ background: 'black', width: '100%', height: '100%' }} />;
+
+    if (activePostIndex !== null) {
+        return <InstagramFeedView profile={profile} activePostIndex={activePostIndex} onBack={() => setActivePostIndex(null)} />;
+    }
 
     return (
         <div style={{
@@ -148,11 +161,16 @@ export default function InstagramView({ data }) {
 
                     {/* Photo Grid Container */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '2px' }}>
-                        {profile.gridPhotos.map(photo => (
-                            <div key={photo.id} style={{
-                                aspectRatio: '1/1',
-                                background: photo.url ? `url(${photo.url}) center/cover` : photo.color
-                            }} />
+                        {profile.gridPhotos.map((photo, index) => (
+                            <div
+                                key={photo.id}
+                                onClick={() => setActivePostIndex(index)}
+                                style={{
+                                    aspectRatio: '1/1',
+                                    background: photo.url ? `url(${photo.url}) center/cover` : photo.color,
+                                    cursor: 'pointer'
+                                }}
+                            />
                         ))}
                     </div>
 

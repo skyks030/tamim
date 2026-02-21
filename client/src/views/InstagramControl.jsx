@@ -11,7 +11,10 @@ export default function InstagramControl({ socket, data }) {
     const gridInputRef = useRef(null);
 
     // State for which grid photo we are currently replacing
+    // State for which grid photo we are currently replacing
     const [uploadingGridPhotoId, setUploadingGridPhotoId] = useState(null);
+    // State for which grid photo we are currently editing comments for
+    const [activePhotoForComments, setActivePhotoForComments] = useState(null);
 
     const updateProfile = (updates) => {
         if (!activeProfile) return;
@@ -33,12 +36,12 @@ export default function InstagramControl({ socket, data }) {
             posts: '6',
             avatar: null,
             gridPhotos: [
-                { id: '1', url: null, color: '#ffaaaa' },
-                { id: '2', url: null, color: '#aaffaa' },
-                { id: '3', url: null, color: '#aaaaff' },
-                { id: '4', url: null, color: '#ffffaa' },
-                { id: '5', url: null, color: '#ffaaff' },
-                { id: '6', url: null, color: '#aaffff' }
+                { id: '1', url: null, color: '#ffaaaa', comments: [] },
+                { id: '2', url: null, color: '#aaffaa', comments: [] },
+                { id: '3', url: null, color: '#aaaaff', comments: [] },
+                { id: '4', url: null, color: '#ffffaa', comments: [] },
+                { id: '5', url: null, color: '#ffaaff', comments: [] },
+                { id: '6', url: null, color: '#aaffff', comments: [] }
             ]
         };
         const updated = [...instagramProfiles, newProfile];
@@ -127,7 +130,36 @@ export default function InstagramControl({ socket, data }) {
         if (confirm("Delete this entire photo block from the grid?")) {
             const updatedGrid = activeProfile.gridPhotos.filter(p => p.id !== photoId);
             updateProfile({ gridPhotos: updatedGrid });
+            if (activePhotoForComments === photoId) setActivePhotoForComments(null);
         }
+    };
+
+    // Update specific comment in a photo
+    const updateComment = (photoId, commentIndex, field, value) => {
+        if (!activeProfile) return;
+        const updatedGrid = activeProfile.gridPhotos.map(photo => {
+            if (photo.id === photoId) {
+                const newComments = [...(photo.comments || [])];
+                // Ensure comment exists up to this index
+                while (newComments.length <= commentIndex) newComments.push({ username: '', text: '' });
+                newComments[commentIndex] = { ...newComments[commentIndex], [field]: value };
+                return { ...photo, comments: newComments };
+            }
+            return photo;
+        });
+        updateProfile({ gridPhotos: updatedGrid });
+    };
+
+    // Update root level photo details (like 'likes' or 'dateText')
+    const updatePhotoDetails = (photoId, field, value) => {
+        if (!activeProfile) return;
+        const updatedGrid = activeProfile.gridPhotos.map(photo => {
+            if (photo.id === photoId) {
+                return { ...photo, [field]: value };
+            }
+            return photo;
+        });
+        updateProfile({ gridPhotos: updatedGrid });
     };
 
     if (!activeProfile) return <div style={{ padding: 20 }}>No Profiles Found.</div>;
@@ -297,6 +329,68 @@ export default function InstagramControl({ socket, data }) {
                             </div>
                         </div>
 
+                        {/* LEFT COLUMN INJECT: Photo Details Editor (Only visible if a photo is selected) */}
+                        {activePhotoForComments && activeProfile.gridPhotos.find(p => p.id === activePhotoForComments) && (() => {
+                            const photo = activeProfile.gridPhotos.find(p => p.id === activePhotoForComments);
+                            return (
+                                <div style={{ marginTop: '20px', padding: '15px', background: 'rgba(0,149,246,0.1)', borderRadius: '12px', border: '1px solid rgba(0,149,246,0.3)' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 15 }}>
+                                        <h4 style={{ margin: 0, color: '#60a5fa' }}>Selected Photo Settings</h4>
+                                        <button onClick={() => setActivePhotoForComments(null)} style={{ background: 'none', border: 'none', color: '#fff', cursor: 'pointer', opacity: 0.7 }}>
+                                            <X size={16} />
+                                        </button>
+                                    </div>
+
+                                    {/* Likes & Date */}
+                                    <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+                                        <div style={{ flex: 1 }}>
+                                            <label style={{ fontSize: '0.75rem', opacity: 0.7 }}>Likes (Number)</label>
+                                            <input
+                                                type="text" className="input-field" placeholder="e.g. 143"
+                                                value={photo.likes || ''}
+                                                onChange={(e) => updatePhotoDetails(photo.id, 'likes', e.target.value)}
+                                                style={{ margin: 0 }}
+                                            />
+                                        </div>
+                                        <div style={{ flex: 2 }}>
+                                            <label style={{ fontSize: '0.75rem', opacity: 0.7 }}>Time/Date Text</label>
+                                            <input
+                                                type="text" className="input-field" placeholder="e.g. VOR 2 TAGEN"
+                                                value={photo.dateText || ''}
+                                                onChange={(e) => updatePhotoDetails(photo.id, 'dateText', e.target.value)}
+                                                style={{ margin: 0 }}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <h5 style={{ margin: '0 0 10px 0', fontSize: '0.85rem', opacity: 0.9 }}>Comments</h5>
+                                    {[0, 1, 2].map(idx => {
+                                        const comment = photo.comments && photo.comments[idx] ? photo.comments[idx] : { username: '', text: '' };
+                                        return (
+                                            <div key={idx} style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                                <div style={{ flex: 1 }}>
+                                                    <input
+                                                        type="text" className="input-field" placeholder={`User ${idx + 1}`}
+                                                        value={comment.username}
+                                                        onChange={(e) => updateComment(photo.id, idx, 'username', e.target.value)}
+                                                        style={{ margin: 0, fontSize: '0.8rem' }}
+                                                    />
+                                                </div>
+                                                <div style={{ flex: 2 }}>
+                                                    <input
+                                                        type="text" className="input-field" placeholder={`Comment ${idx + 1}...`}
+                                                        value={comment.text}
+                                                        onChange={(e) => updateComment(photo.id, idx, 'text', e.target.value)}
+                                                        style={{ margin: 0, fontSize: '0.8rem' }}
+                                                    />
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            );
+                        })()}
+
                     </div>
                 </div>
 
@@ -316,23 +410,31 @@ export default function InstagramControl({ socket, data }) {
                             <div key={photo.id} style={{ position: 'relative', aspectRatio: '1/1' }}>
                                 <div
                                     onClick={() => {
-                                        setUploadingGridPhotoId(photo.id);
-                                        gridInputRef.current?.click();
+                                        // Whether uploaded or solid color, clicking anywhere just SELECTS the photo for editing
+                                        setActivePhotoForComments(activePhotoForComments === photo.id ? null : photo.id);
                                     }}
                                     style={{
                                         width: '100%', height: '100%',
                                         background: photo.url ? `url(${photo.url}) center/cover` : photo.color,
                                         cursor: 'pointer',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        border: '1px solid rgba(255,255,255,0.1)'
+                                        border: activePhotoForComments === photo.id ? '2px solid #0095f6' : '1px solid rgba(255,255,255,0.1)',
+                                        boxSizing: 'border-box'
                                     }}
                                 >
                                     {!photo.url && <ImageIcon color="white" size={20} opacity={0.5} />}
                                 </div>
                                 {/* Actions Overlay on hover */}
                                 <div style={{ position: 'absolute', top: 2, right: 2, display: 'flex', gap: 2 }}>
+                                    <button onClick={(e) => {
+                                        e.stopPropagation();
+                                        setUploadingGridPhotoId(photo.id);
+                                        gridInputRef.current?.click();
+                                    }} style={{ background: 'rgba(0,149,246,0.8)', border: 'none', borderRadius: '50%', color: 'white', padding: 0, width: 22, height: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Upload Image">
+                                        <Upload size={12} />
+                                    </button>
                                     {photo.url && (
-                                        <button onClick={() => clearGridPhoto(photo.id)} style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', padding: 0, width: 22, height: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove Image">
+                                        <button onClick={(e) => { e.stopPropagation(); clearGridPhoto(photo.id); }} style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', padding: 0, width: 22, height: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove Image">
                                             <X size={14} />
                                         </button>
                                     )}
@@ -344,8 +446,9 @@ export default function InstagramControl({ socket, data }) {
                         ))}
                     </div>
                     <p style={{ fontSize: '0.8rem', opacity: 0.6, marginTop: '10px', textAlign: 'center' }}>
-                        Click a square to upload a photo. Uses color blocks if empty.
+                        Click a slot to configure its Likes, Date, and Comments. Click the blue Upload icon to replace the image.
                     </p>
+
                 </div>
             </div>
         </div>

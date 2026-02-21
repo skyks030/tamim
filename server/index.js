@@ -157,12 +157,12 @@ const INITIAL_DB = {
       posts: '6',
       avatar: null, // URL
       gridPhotos: [
-        { id: '1', url: null, color: '#ffaaaa' },
-        { id: '2', url: null, color: '#aaffaa' },
-        { id: '3', url: null, color: '#aaaaff' },
-        { id: '4', url: null, color: '#ffffaa' },
-        { id: '5', url: null, color: '#ffaaff' },
-        { id: '6', url: null, color: '#aaffff' }
+        { id: '1', url: null, color: '#ffaaaa', comments: [], likes: '143', dateText: 'VOR 2 TAGEN' },
+        { id: '2', url: null, color: '#aaffaa', comments: [], likes: '89', dateText: 'VOR 4 TAGEN' },
+        { id: '3', url: null, color: '#aaaaff', comments: [], likes: '210', dateText: 'VOR 1 WOCHE' },
+        { id: '4', url: null, color: '#ffffaa', comments: [], likes: '55', dateText: 'VOR 2 WOCHEN' },
+        { id: '5', url: null, color: '#ffaaff', comments: [], likes: '342', dateText: 'VOR 1 MONAT' },
+        { id: '6', url: null, color: '#aaffff', comments: [], likes: '88', dateText: 'VOR 2 MONATEN' }
       ]
     }
   ]
@@ -201,6 +201,23 @@ if (fs.existsSync(DB_FILE)) {
         }
       });
     } // Close if (db.chats)
+
+    if (!db.instagramProfiles) {
+      db.instagramProfiles = INITIAL_DB.instagramProfiles;
+      db.activeInstagramProfileId = INITIAL_DB.activeInstagramProfileId;
+    } else {
+      // Hydrate existing instagram profiles with new `comments` array for feed view
+      db.instagramProfiles.forEach(profile => {
+        if (!profile.isFollowing) profile.isFollowing = true;
+        if (profile.gridPhotos) {
+          profile.gridPhotos.forEach(photo => {
+            if (!photo.comments) photo.comments = [];
+            if (!photo.likes) photo.likes = Math.floor(Math.random() * 500) + 50;
+            if (!photo.dateText) photo.dateText = 'VOR EINIGEN TAGEN';
+          });
+        }
+      });
+    }
 
   } catch (e) {
     console.error("Failed to load DB, using initial state:", e);

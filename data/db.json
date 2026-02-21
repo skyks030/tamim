@@ -574,85 +574,135 @@
       "followers": "10.5k",
       "following": "128",
       "posts": "6",
-      "avatar": null,
+      "avatar": "/uploads/13ca58f8-bc52-4e02-9bbc-fdd0c41fb31e.jpeg",
       "gridPhotos": [
         {
           "id": "2",
-          "url": "/uploads/e26bc77a-a720-46bc-ac72-429a8f967d4e.jpeg",
-          "color": "#aaffaa"
+          "url": "/uploads/2dbeb076-5215-4d18-8242-8ddaadc53848.jpeg",
+          "color": "#aaffaa",
+          "comments": [
+            {
+              "username": "@daniel93",
+              "text": "jooooooooo!!!!!!!"
+            }
+          ],
+          "likes": "204",
+          "dateText": "vor 1h"
         },
         {
           "id": "3",
           "url": null,
-          "color": "#aaaaff"
+          "color": "#aaaaff",
+          "comments": [],
+          "likes": 80,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "4",
           "url": null,
-          "color": "#ffffaa"
+          "color": "#ffffaa",
+          "comments": [],
+          "likes": 544,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "5",
           "url": null,
-          "color": "#ffaaff"
+          "color": "#ffaaff",
+          "comments": [],
+          "likes": 367,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "6",
           "url": null,
-          "color": "#aaffff"
+          "color": "#aaffff",
+          "comments": [],
+          "likes": 490,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597453367",
           "url": null,
-          "color": "#facade"
+          "color": "#facade",
+          "comments": [],
+          "likes": 91,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597454349",
           "url": null,
-          "color": "#decaf0"
+          "color": "#decaf0",
+          "comments": [],
+          "likes": 394,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597454680",
           "url": null,
-          "color": "#ffaaaa"
+          "color": "#ffaaaa",
+          "comments": [],
+          "likes": 259,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597454957",
           "url": null,
-          "color": "#aaffaa"
+          "color": "#aaffaa",
+          "comments": [],
+          "likes": 185,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597455236",
           "url": null,
-          "color": "#aaaaff"
+          "color": "#aaaaff",
+          "comments": [],
+          "likes": 122,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597455494",
           "url": null,
-          "color": "#ffffaa"
+          "color": "#ffffaa",
+          "comments": [],
+          "likes": 434,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597455749",
           "url": null,
-          "color": "#ffaaff"
+          "color": "#ffaaff",
+          "comments": [],
+          "likes": 396,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597456316",
           "url": null,
-          "color": "#aaffff"
+          "color": "#aaffff",
+          "comments": [],
+          "likes": 80,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771597456550",
           "url": null,
-          "color": "#facade"
+          "color": "#facade",
+          "comments": [],
+          "likes": 359,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "1771695888953",
           "url": null,
-          "color": "#facade"
+          "color": "#facade",
+          "comments": [],
+          "likes": 188,
+          "dateText": "VOR EINIGEN TAGEN"
         }
       ],
-      "isFollowing": false
+      "isFollowing": true
     },
     {
       "id": "profile-1771594678881",
@@ -667,34 +717,53 @@
         {
           "id": "1",
           "url": null,
-          "color": "#ffaaaa"
+          "color": "#ffaaaa",
+          "comments": [],
+          "likes": 59,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "2",
           "url": null,
-          "color": "#aaffaa"
+          "color": "#aaffaa",
+          "comments": [],
+          "likes": 453,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "3",
           "url": null,
-          "color": "#aaaaff"
+          "color": "#aaaaff",
+          "comments": [],
+          "likes": 268,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "4",
           "url": null,
-          "color": "#ffffaa"
+          "color": "#ffffaa",
+          "comments": [],
+          "likes": 400,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "5",
           "url": null,
-          "color": "#ffaaff"
+          "color": "#ffaaff",
+          "comments": [],
+          "likes": 287,
+          "dateText": "VOR EINIGEN TAGEN"
         },
         {
           "id": "6",
           "url": null,
-          "color": "#aaffff"
+          "color": "#aaffff",
+          "comments": [],
+          "likes": 236,
+          "dateText": "VOR EINIGEN TAGEN"
         }
-      ]
+      ],
+      "isFollowing": true
     }
   ],
   "datingAppName": " TAMIM",
