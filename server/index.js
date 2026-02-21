@@ -494,7 +494,7 @@ io.on('connection', (socket) => {
   */
 
   // Clear Avatar (Reset to Gradient)
-  socket.on('control:clear_avatar', ({ purpose, chatId }) => {
+  socket.on('control:clear_avatar', ({ purpose, chatId, profileId, photoId }) => {
     if (purpose === 'chat' && chatId) {
       const chat = db.chats.find(c => c.id === chatId);
       if (chat) {
@@ -525,16 +525,14 @@ io.on('connection', (socket) => {
         io.emit('data:update', db);
       }
     } else if (purpose === 'instagram-avatar') {
-      const profileId = req.body?.profileId || chatId; // Support both sending styles temporarily if needed
-      const profile = db.instagramProfiles.find(p => p.id === profileId);
+      const pId = profileId || chatId;
+      const profile = db.instagramProfiles.find(p => p.id === pId);
       if (profile) {
         profile.avatar = null;
         saveDb();
         io.emit('data:update', db);
       }
     } else if (purpose === 'instagram-grid') {
-      const profileId = req.body?.profileId || args?.profileId;
-      const photoId = req.body?.photoId || args?.photoId;
       const profile = db.instagramProfiles.find(p => p.id === profileId);
       if (profile) {
         const photo = profile.gridPhotos.find(p => p.id === photoId);

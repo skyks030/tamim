@@ -199,8 +199,8 @@ export default function InstagramControl({ socket, data }) {
                                     </div>
                                 </div>
                                 {activeProfile.avatar && (
-                                    <button onClick={clearAvatar} className="control-btn danger" style={{ position: 'absolute', top: -5, right: -5, padding: 4, borderRadius: '50%', minWidth: 'auto', margin: 0 }}>
-                                        <X size={12} />
+                                    <button onClick={clearAvatar} className="control-btn danger" style={{ position: 'absolute', top: -5, right: -5, padding: 0, width: 24, height: 24, borderRadius: '50%', minWidth: 'auto', margin: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <X size={14} />
                                     </button>
                                 )}
                             </div>
@@ -332,11 +332,11 @@ export default function InstagramControl({ socket, data }) {
                                 {/* Actions Overlay on hover */}
                                 <div style={{ position: 'absolute', top: 2, right: 2, display: 'flex', gap: 2 }}>
                                     {photo.url && (
-                                        <button onClick={() => clearGridPhoto(photo.id)} style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', padding: 4, cursor: 'pointer' }} title="Remove Image">
-                                            <X size={12} />
+                                        <button onClick={() => clearGridPhoto(photo.id)} style={{ background: 'rgba(0,0,0,0.6)', border: 'none', borderRadius: '50%', color: 'white', padding: 0, width: 22, height: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Remove Image">
+                                            <X size={14} />
                                         </button>
                                     )}
-                                    <button onClick={() => deleteGridPhotoSlot(photo.id)} style={{ background: 'rgba(239, 68, 68, 0.8)', border: 'none', borderRadius: '50%', color: 'white', padding: 4, cursor: 'pointer' }} title="Delete Block">
+                                    <button onClick={() => deleteGridPhotoSlot(photo.id)} style={{ background: 'rgba(239, 68, 68, 0.8)', border: 'none', borderRadius: '50%', color: 'white', padding: 0, width: 22, height: 22, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }} title="Delete Block">
                                         <Trash2 size={12} />
                                     </button>
                                 </div>
