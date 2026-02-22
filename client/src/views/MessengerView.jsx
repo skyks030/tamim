@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef } from 'react';
-import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle, Mic, Play } from 'lucide-react';
+import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle, Mic, Play, Trash2, MapPin } from 'lucide-react';
 import VirtualKeyboard from '../components/VirtualKeyboard';
 
 export default function MessengerView({ socket, data }) {
@@ -107,7 +107,8 @@ export default function MessengerView({ socket, data }) {
             if (scrollContainerRef.current) {
                 const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
                 const distance = scrollHeight - scrollTop - clientHeight;
-                shouldScroll = distance < 150; // User is near bottom
+                // Increased threshold to 300px to account for tall messages like Location cards
+                shouldScroll = distance < 300; // User is near bottom
             }
 
             if (shouldScroll) {
@@ -507,6 +508,8 @@ export default function MessengerView({ socket, data }) {
                                 }
 
                                 const isVoice = msg.text && msg.text.startsWith('[[VOICE::');
+                                const isLocation = msg.text === '[[LOCATION]]';
+
                                 let voiceDuration = 0;
                                 if (isVoice) {
                                     const match = msg.text.match(/\[\[VOICE::(\d+)\]\]/);
@@ -517,9 +520,71 @@ export default function MessengerView({ socket, data }) {
                                     <div
                                         key={msg.id}
                                         className={`message ${msg.sender} fade-in-up`}
-                                        style={{ flexShrink: 0, padding: isVoice ? '10px 14px' : undefined }}
+                                        style={{
+                                            flexShrink: 0,
+                                            padding: isLocation ? '4px' : (isVoice ? '10px 14px' : undefined)
+                                        }}
                                     >
-                                        {isVoice ? (
+                                        {isLocation ? (
+                                            <div style={{
+                                                width: '240px',
+                                                height: '140px',
+                                                borderRadius: '16px',
+                                                position: 'relative',
+                                                overflow: 'hidden',
+                                                cursor: 'pointer',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.05)'
+                                            }}>
+                                                {/* Fake City Map Background using CSS patterns */}
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: -20, left: -20, right: -20, bottom: -20, // Oversize to hide edge clipping
+                                                    backgroundColor: '#e5e3df', // Classic Google Maps ground color
+                                                    backgroundImage: `
+                                                        linear-gradient(90deg, transparent 48%, #f8f9fa 48%, #f8f9fa 52%, transparent 52%), /* Main vertical road */
+                                                        linear-gradient(0deg, transparent 38%, #f8f9fa 38%, #f8f9fa 44%, transparent 44%), /* Main horizontal road */
+                                                        linear-gradient(45deg, transparent 20%, #ffffff 20%, #ffffff 24%, transparent 24%), /* Diagonal street */
+                                                        linear-gradient(-35deg, transparent 60%, #ffffff 60%, #ffffff 63%, transparent 63%), /* Diagonal street 2 */
+                                                        radial-gradient(ellipse at 80% 20%, #aad3df 0%, #aad3df 25%, transparent 25%), /* Lake abstract */
+                                                        radial-gradient(circle at 10% 80%, #cdeac0 0%, #cdeac0 20%, transparent 20%) /* Park abstract */
+                                                    `,
+                                                    backgroundSize: '100px 100px, 120px 120px, 80px 80px, 110px 110px, 100% 100%, 100% 100%',
+                                                    filter: 'blur(0.8px) contrast(1.1) brightness(0.95)'
+                                                }} />
+
+                                                {/* Pin Shadow */}
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    top: 'calc(50% + 12px)',
+                                                    width: 16,
+                                                    height: 6,
+                                                    backgroundColor: 'rgba(0,0,0,0.3)',
+                                                    borderRadius: '50%',
+                                                    filter: 'blur(2px)',
+                                                    zIndex: 5
+                                                }} />
+
+                                                {/* Pin Container with pulse glow */}
+                                                <div style={{
+                                                    position: 'relative',
+                                                    zIndex: 10,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    justifyContent: 'center',
+                                                    width: 50,
+                                                    height: 50,
+                                                    backgroundColor: 'rgba(234, 67, 53, 0.15)', // Maps red glow
+                                                    borderRadius: '50%',
+                                                    animation: 'pulseRecord 2s infinite',
+                                                    marginTop: -10
+                                                }}>
+                                                    <MapPin size={28} color="#ea4335" fill="#ea4335" strokeWidth={1} style={{ filter: 'drop-shadow(0px 3px 5px rgba(0,0,0,0.4))', marginTop: -6 }} />
+                                                </div>
+                                            </div>
+                                        ) : isVoice ? (
                                             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '160px' }}>
                                                 {/* Play Button */}
                                                 <div style={{
@@ -637,6 +702,27 @@ export default function MessengerView({ socket, data }) {
                                     <Mic size={22} />
                                 </button>
                             )}
+                            {isRecording && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        setIsRecording(false);
+                                        setRecordingTime(0);
+                                    }}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: '#ef4444',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <Trash2 size={22} />
+                                </button>
+                            )}
                             <button
                                 onClick={(e) => { e.stopPropagation(); handleVirtualSend(); }}
                                 style={{
@@ -704,63 +790,65 @@ export default function MessengerView({ socket, data }) {
                         </div>
                     </div>
                 </div>
-            </div>
+            </div >
 
             {/* MATCH DISSOLUTION OVERLAY */}
-            {activeChat.dissolved && (
-                <div className="fade-in-up" style={{
-                    position: 'fixed', // Fixed to viewport
-                    inset: 0,          // Top/Left/Right/Bottom 0
-                    width: '100%',
-                    height: '100%',
-                    zIndex: 9999,
-                    backgroundColor: data.messengerDissolveSettings?.overlayColor || 'rgba(0,0,0,0.85)',
-                    backdropFilter: 'blur(5px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    textAlign: 'center',
-                    color: 'white',
-                    padding: 40,
-                    overscrollBehavior: 'none', // Prevent bounce
-                    touchAction: 'none'         // Prevent scrolling through
-                }}>
-                    {data.messengerDissolveSettings?.overlayImage ? (
-                        <img
-                            src={data.messengerDissolveSettings.overlayImage}
-                            alt="Match Dissolved"
-                            style={{
-                                width: `${data.messengerDissolveSettings.overlayImageSize ?? 80}%`,
-                                maxWidth: '300px',
-                                marginBottom: '30px',
-                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))',
-                                objectFit: 'contain'
-                            }}
-                        />
-                    ) : (
-                        <img
-                            src="/wilted_rose.png"
-                            alt="Match Dissolved"
-                            style={{
-                                width: '150px',
-                                marginBottom: '30px',
-                                filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
-                            }}
-                        />
-                    )}
-
-                    <h2 style={{
-                        fontSize: '2rem',
-                        fontWeight: 'bold',
-                        margin: 0,
-                        textShadow: '0 2px 10px rgba(0,0,0,0.5)',
-                        display: data.messengerDissolveSettings?.text === "" ? 'none' : 'block'
+            {
+                activeChat.dissolved && (
+                    <div className="fade-in-up" style={{
+                        position: 'fixed', // Fixed to viewport
+                        inset: 0,          // Top/Left/Right/Bottom 0
+                        width: '100%',
+                        height: '100%',
+                        zIndex: 9999,
+                        backgroundColor: data.messengerDissolveSettings?.overlayColor || 'rgba(0,0,0,0.85)',
+                        backdropFilter: 'blur(5px)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        textAlign: 'center',
+                        color: 'white',
+                        padding: 40,
+                        overscrollBehavior: 'none', // Prevent bounce
+                        touchAction: 'none'         // Prevent scrolling through
                     }}>
-                        {data.messengerDissolveSettings?.text || activeChat.dissolutionMessage || "Match dissolved"}
-                    </h2>
-                </div>
-            )}
+                        {data.messengerDissolveSettings?.overlayImage ? (
+                            <img
+                                src={data.messengerDissolveSettings.overlayImage}
+                                alt="Match Dissolved"
+                                style={{
+                                    width: `${data.messengerDissolveSettings.overlayImageSize ?? 80}%`,
+                                    maxWidth: '300px',
+                                    marginBottom: '30px',
+                                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))',
+                                    objectFit: 'contain'
+                                }}
+                            />
+                        ) : (
+                            <img
+                                src="/wilted_rose.png"
+                                alt="Match Dissolved"
+                                style={{
+                                    width: '150px',
+                                    marginBottom: '30px',
+                                    filter: 'drop-shadow(0 10px 20px rgba(0,0,0,0.3))'
+                                }}
+                            />
+                        )}
+
+                        <h2 style={{
+                            fontSize: '2rem',
+                            fontWeight: 'bold',
+                            margin: 0,
+                            textShadow: '0 2px 10px rgba(0,0,0,0.5)',
+                            display: data.messengerDissolveSettings?.text === "" ? 'none' : 'block'
+                        }}>
+                            {data.messengerDissolveSettings?.text || activeChat.dissolutionMessage || "Match dissolved"}
+                        </h2>
+                    </div>
+                )
+            }
 
             <style>{`
           .message {

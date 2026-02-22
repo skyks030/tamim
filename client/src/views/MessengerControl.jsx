@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Plus, Edit2, Save, Send, Trash2, RefreshCw, MessageSquare } from 'lucide-react';
+import { Plus, Edit2, Save, Send, Trash2, RefreshCw, MessageSquare, MapPin } from 'lucide-react';
 import axios from 'axios';
 
 export default function MessengerControl({ socket, data }) {
@@ -561,10 +561,16 @@ export default function MessengerControl({ socket, data }) {
                                     {/* ACTIONS */}
                                     <div className="glass-panel" style={{ padding: 15, background: 'rgba(0,0,0,0.2)' }}>
                                         <h4 style={{ marginTop: 0 }}>Live Controls</h4>
-                                        <button className="control-btn" onClick={sendTyping}>
-                                            <MessageSquare size={16} style={{ marginRight: 8 }} />
-                                            Trigger Typing (3s)
-                                        </button>
+                                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                                            <button className="control-btn" onClick={sendTyping} style={{ flex: '1 1 auto', marginBottom: 0 }}>
+                                                <MessageSquare size={16} style={{ marginRight: 8 }} />
+                                                Trigger Typing (3s)
+                                            </button>
+                                            <button className="control-btn" onClick={() => sendMessage("[[LOCATION]]", 'match')} style={{ flex: '1 1 auto', marginBottom: 0, background: '#3b82f6', border: 'none', color: 'white' }}>
+                                                <MapPin size={16} style={{ marginRight: 8 }} />
+                                                Loc (Match)
+                                            </button>
+                                        </div>
 
                                         {/* Dissolve Chat Toggle */}
                                         <div style={{ marginTop: 10, padding: 10, background: 'rgba(239, 68, 68, 0.1)', borderRadius: 8, border: '1px solid rgba(239, 68, 68, 0.2)' }}>
