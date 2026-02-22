@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from 'react';
-import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle } from 'lucide-react';
+import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle, Mic, Play } from 'lucide-react';
 import VirtualKeyboard from '../components/VirtualKeyboard';
 
 export default function MessengerView({ socket, data }) {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'chat'
     const [localInputValue, setLocalInputValue] = useState("");
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // Virtual Keyboard
+    const [isRecording, setIsRecording] = useState(false);
+    const [recordingTime, setRecordingTime] = useState(0);
     const messagesEndRef = useRef(null);
     const scrollContainerRef = useRef(null);
     const touchStartRef = useRef(0); // For swipe detection
@@ -57,17 +59,46 @@ export default function MessengerView({ socket, data }) {
     };
 
     const handleVirtualSend = () => {
+        if (isRecording) {
+            socket.emit('actor:send_message', { chatId: activeChatId, text: `[[VOICE::${recordingTime}]]` });
+            setIsRecording(false);
+            setRecordingTime(0);
+            return;
+        }
         if (!localInputValue.trim()) return;
         socket.emit('actor:send_message', { chatId: activeChatId, text: localInputValue });
         setLocalInputValue(""); // Clear local
-
-        // IMPORTANT: We need to somehow clear the library's internal input buffer if we keep it open
-        // Since we unmount/remount or hide, for now we just close it. 
-        // If we kept it open, we'd need a ref to keyboard to call .clearInput()
-
-        // KEEP OPEN: User requested to keep keyboard open after send
-        // setIsKeyboardVisible(false); 
     };
+
+    const handleMicClick = (e) => {
+        e.stopPropagation();
+        if (isRecording) {
+            handleVirtualSend(); // Stop and Send
+        } else {
+            setIsRecording(true);
+            setRecordingTime(0);
+            setIsKeyboardVisible(false); // Hide keyboard when recording voice
+        }
+    };
+
+    const formatTime = (secs) => {
+        const m = Math.floor(secs / 60);
+        const s = secs % 60;
+        return `${m}:${s.toString().padStart(2, '0')}`;
+    };
+
+    // Recording Timer
+    useEffect(() => {
+        let interval;
+        if (isRecording) {
+            interval = setInterval(() => {
+                setRecordingTime(prev => prev + 1);
+            }, 1000);
+        } else {
+            setRecordingTime(0);
+        }
+        return () => clearInterval(interval);
+    }, [isRecording]);
 
     // Auto scroll when messages change or typing status changes
     useEffect(() => {
@@ -474,13 +505,52 @@ export default function MessengerView({ socket, data }) {
                                         </div>
                                     );
                                 }
+
+                                const isVoice = msg.text && msg.text.startsWith('[[VOICE::');
+                                let voiceDuration = 0;
+                                if (isVoice) {
+                                    const match = msg.text.match(/\[\[VOICE::(\d+)\]\]/);
+                                    if (match) voiceDuration = parseInt(match[1]) || 0;
+                                }
+
                                 return (
                                     <div
                                         key={msg.id}
                                         className={`message ${msg.sender} fade-in-up`}
-                                        style={{ flexShrink: 0 }}
+                                        style={{ flexShrink: 0, padding: isVoice ? '10px 14px' : undefined }}
                                     >
-                                        {msg.text}
+                                        {isVoice ? (
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: '160px' }}>
+                                                {/* Play Button */}
+                                                <div style={{
+                                                    width: 36, height: 36, borderRadius: '50%',
+                                                    backgroundColor: msg.sender === 'me' ? 'white' : theme.primary,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                    color: msg.sender === 'me' ? (theme.outgoing || theme.primary) : 'white',
+                                                    flexShrink: 0,
+                                                    boxShadow: '0 2px 5px rgba(0,0,0,0.1)'
+                                                }}>
+                                                    <Play size={18} fill="currentColor" style={{ marginLeft: 2 }} />
+                                                </div>
+                                                {/* Fake Waveform */}
+                                                <div style={{ flex: 1, height: '24px', display: 'flex', alignItems: 'center', gap: 2 }}>
+                                                    {[...Array(20)].map((_, i) => (
+                                                        <div key={i} style={{
+                                                            width: 3,
+                                                            height: `${40 + Math.sin(i * 0.8 + voiceDuration) * 40 + Math.cos(i * 1.5) * 20}%`,
+                                                            backgroundColor: 'currentColor',
+                                                            opacity: 0.5,
+                                                            borderRadius: 2
+                                                        }} />
+                                                    ))}
+                                                </div>
+                                                <span style={{ fontSize: '0.75rem', fontWeight: 'bold', minWidth: '35px', textAlign: 'right', opacity: 0.8 }}>
+                                                    {formatTime(voiceDuration)}
+                                                </span>
+                                            </div>
+                                        ) : (
+                                            msg.text
+                                        )}
                                     </div>
                                 );
                             })}
@@ -534,36 +604,61 @@ export default function MessengerView({ socket, data }) {
                                 minHeight: '40px'
                             }}
                         >
-                            {localInputValue ? (
-                                <span style={{ whiteSpace: 'pre-wrap' }}>{localInputValue}</span>
+                            {isRecording ? (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444', fontWeight: 'bold' }}>
+                                    <div className="recording-dot" style={{ width: 10, height: 10, borderRadius: '50%', backgroundColor: '#ef4444' }}></div>
+                                    {formatTime(recordingTime)}
+                                </div>
                             ) : (
-                                <span style={{ opacity: 0.5 }}>Type a message...</span>
+                                localInputValue ? (
+                                    <span style={{ whiteSpace: 'pre-wrap' }}>{localInputValue}</span>
+                                ) : (
+                                    <span style={{ opacity: 0.5 }}>Type a message...</span>
+                                )
                             )}
-                            {isKeyboardVisible && <div className="cursor-blink"></div>}
+                            {(isKeyboardVisible && !isRecording) && <div className="cursor-blink"></div>}
                         </div>
 
-                        <button
-                            onClick={(e) => { e.stopPropagation(); handleVirtualSend(); }}
-                            style={{
-                                width: '40px',
-                                height: '40px',
-                                borderRadius: '50%',
-                                background: 'white',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                border: 'none',
-                                cursor: 'pointer',
-                                padding: 0,
-                                marginLeft: '10px',
-                                flexShrink: 0
-                            }}
-                        >
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={theme.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <line x1="22" y1="2" x2="11" y2="13"></line>
-                                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                            </svg>
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '10px' }}>
+                            {(!localInputValue && !isRecording) && (
+                                <button
+                                    onClick={handleMicClick}
+                                    style={{
+                                        background: 'transparent',
+                                        border: 'none',
+                                        color: 'rgba(255,255,255,0.7)',
+                                        padding: '8px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        cursor: 'pointer'
+                                    }}
+                                >
+                                    <Mic size={22} />
+                                </button>
+                            )}
+                            <button
+                                onClick={(e) => { e.stopPropagation(); handleVirtualSend(); }}
+                                style={{
+                                    width: '40px',
+                                    height: '40px',
+                                    borderRadius: '50%',
+                                    background: isRecording ? '#ef4444' : 'white',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    border: 'none',
+                                    cursor: 'pointer',
+                                    padding: 0,
+                                    flexShrink: 0
+                                }}
+                            >
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={isRecording ? 'white' : theme.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
 
                     {/* Spacer that forces messages up dynamically */}
@@ -694,6 +789,15 @@ export default function MessengerView({ socket, data }) {
               background: white;
               margin-left: 2px;
               animation: blink 1s infinite;
+          }
+          
+          @keyframes pulseRecord { 
+              0% { opacity: 1; transform: scale(1); }
+              50% { opacity: 0.3; transform: scale(1.3); }
+              100% { opacity: 1; transform: scale(1); }
+          }
+          .recording-dot {
+              animation: pulseRecord 1.5s infinite;
           }
           
           .typing-indicator {
