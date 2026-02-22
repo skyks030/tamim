@@ -1,10 +1,10 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import Keyboard from "react-simple-keyboard";
 import "react-simple-keyboard/build/css/index.css";
-// Removed toolbar imports since we want a single send button (likely in input area)
 
 export default function VirtualKeyboard({ isActive, value, onChange, onKeyPress, onSend }) {
     const keyboard = useRef();
+    const [layoutName, setLayoutName] = useState("default");
 
     // FORCE SYNC: When parent clears 'value' (to ""), we must tell the library to clear its internal buffer
     useEffect(() => {
@@ -13,67 +13,111 @@ export default function VirtualKeyboard({ isActive, value, onChange, onKeyPress,
         }
     }, [value]);
 
-    // Unified Sliding Layout: Always render fixed height block
-    // Parent wrapper slides it in/out.
+    const handleKeyPress = (button) => {
+        // Handle Layout Switches
+        if (button === "{shift}") {
+            setLayoutName(layoutName === "default" ? "shift" : "default");
+            return;
+        }
+        if (button === "{numbers}") {
+            setLayoutName("numbers");
+            return;
+        }
+        if (button === "{abc}") {
+            setLayoutName("default");
+            return;
+        }
+        if (button === "{symbols}") {
+            setLayoutName("symbols");
+            return;
+        }
+
+        // Handle Normal Typing
+        if (button === "{enter}") {
+            onSend();
+        } else {
+            onKeyPress?.(button);
+        }
+
+        // Auto-revert shift after typing a character (skip backspace and layout mod keys)
+        if (layoutName === "shift" && !button.startsWith("{") && button !== "{backspace}") {
+            setLayoutName("default");
+        } else if (layoutName === "shift" && (button === "{space}" || button === "{enter}")) {
+            setLayoutName("default");
+        }
+    };
 
     return (
         <div
-            className="virtual-keyboard-container glass"
+            className="virtual-keyboard-container"
             style={{
-                height: 'calc(280px + env(safe-area-inset-bottom))',
-                display: 'flex', // Ensure content displays
-                margin: '0 10px 30px 10px', // Floating margins (Lifted up)
-                width: 'auto', // Fix "shifted right" by letting margins dictate width
-                borderRadius: '24px', // Rounded corners
+                height: '300px',
+                display: 'flex',
+                margin: '0 10px 0 10px',
+                width: 'auto',
+                borderRadius: '24px',
             }}
             onClick={(e) => e.stopPropagation()}
         >
             <Keyboard
                 keyboardRef={(r) => (keyboard.current = r)}
-                input={value} // Controlled input
+                input={value}
+                layoutName={layoutName}
                 onChange={onChange}
-                onKeyPress={(button) => {
-                    if (button === "{enter}") onSend();
-                    else onKeyPress?.(button);
-                }}
+                onKeyPress={handleKeyPress}
                 layout={{
                     default: [
                         "q w e r t z u i o p ü",
                         "a s d f g h j k l ö ä",
-                        "{shift} y x c v b n m . {backspace}",
+                        "{shift} y x c v b n m {backspace}",
                         "{numbers} {space} {enter}"
                     ],
                     shift: [
                         "Q W E R T Z U I O P Ü",
                         "A S D F G H J K L Ö Ä",
-                        "{shift} Y X C V B N M . {backspace}",
+                        "{shift} Y X C V B N M {backspace}",
                         "{numbers} {space} {enter}"
                     ],
                     numbers: [
                         "1 2 3 4 5 6 7 8 9 0",
                         "- / : ; ( ) € & @ \"",
-                        "{shift} . , ? ! ' {backspace}",
+                        "{symbols} . , ? ! ' {backspace}",
+                        "{abc} {space} {enter}"
+                    ],
+                    symbols: [
+                        "[ ] { } # % ^ * + =",
+                        "_ \\ | ~ < > $ £ ¥ ·",
+                        "{numbers} . , ? ! ' {backspace}",
                         "{abc} {space} {enter}"
                     ]
                 }}
                 display={{
                     "{numbers}": "123",
-                    "{enter}": "senden",
+                    "{abc}": "ABC",
+                    "{symbols}": "#+=",
+                    "{enter}": "Senden",
                     "{escape}": "esc ⎋",
                     "{tab}": "tab ⇥",
                     "{backspace}": "⌫",
                     "{shift}": "⇧",
                     "{capslock}": "caps lock ⇪",
-                    "{space}": "Leerzeichen",
-                    "{abc}": "ABC"
+                    "{space}": "Leerzeichen"
                 }}
+                buttonTheme={[
+                    {
+                        class: layoutName === "shift" ? "hg-active-shift" : "",
+                        buttons: "{shift}"
+                    }
+                ]}
                 theme={"hg-theme-default hg-theme-ios"}
             />
 
             <style>{`
         .virtual-keyboard-container {
             width: 100%;
-            background: #1c1c1e; /* Match iOS KB color */
+            background: rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
             border-top: 1px solid rgba(255,255,255,0.1);
             display: flex;
             flex-direction: column;
@@ -111,9 +155,15 @@ export default function VirtualKeyboard({ isActive, value, onChange, onKeyPress,
         /* Special Keys slightly smaller font */
         .hg-theme-ios .hg-button.hg-functionBtn {
             background: #3a3a3c !important;
-            font-size: 0.9rem !important;
+            font-size: 1rem !important;
         }
         
+        /* Active Shift Key */
+        .hg-theme-ios .hg-active-shift {
+            background: #ffffff !important;
+            color: #000000 !important;
+        }
+
         /* --- HIER DIE GRÖSSE DES LÖSCH-SYMBOLS ÄNDERN --- */
         /* Backspace: Settings for Delete Key */
         .hg-theme-ios .hg-button-backspace {
@@ -132,6 +182,17 @@ export default function VirtualKeyboard({ isActive, value, onChange, onKeyPress,
             margin-top: -2px !important; /* Fine tune vertical center */
         }
         
+        /* Shift Key Settings */
+        .hg-theme-ios .hg-button-shift {
+            min-width: unset !important;
+            width: 50px !important;
+            flex-grow: 0 !important;
+        }
+        .hg-theme-ios .hg-button-shift span {
+            transform: scale(2.0) !important;
+            display: inline-block !important;
+        }
+
         /* Spacebar */
         .hg-theme-ios .hg-button-space {
             background: #4a4a4c !important;
@@ -143,7 +204,7 @@ export default function VirtualKeyboard({ isActive, value, onChange, onKeyPress,
             background: #007AFF !important;
             color: white !important;
             font-weight: 600 !important;
-             font-size: 0.9rem !important;
+            font-size: 1rem !important;
         }
 
       `}</style>

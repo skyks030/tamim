@@ -7,6 +7,7 @@ export default function MessengerView({ socket, data }) {
     const [localInputValue, setLocalInputValue] = useState("");
     const [isKeyboardVisible, setIsKeyboardVisible] = useState(false); // Virtual Keyboard
     const messagesEndRef = useRef(null);
+    const scrollContainerRef = useRef(null);
     const touchStartRef = useRef(0); // For swipe detection
 
     const { chats, activeChatId, actorAvatar } = data;
@@ -68,12 +69,38 @@ export default function MessengerView({ socket, data }) {
         // setIsKeyboardVisible(false); 
     };
 
-    // Auto scroll
+    // Auto scroll when messages change or typing status changes
     useEffect(() => {
         if (viewMode === 'chat') {
-            setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+            let shouldScroll = true;
+            if (scrollContainerRef.current) {
+                const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+                const distance = scrollHeight - scrollTop - clientHeight;
+                shouldScroll = distance < 150; // User is near bottom
+            }
+
+            if (shouldScroll) {
+                setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+            }
         }
-    }, [activeChat?.messages, isTyping, viewMode]);
+    }, [activeChat?.messages?.length, isTyping]);
+
+    // Sync scroll to bottom during keyboard transitions
+    useEffect(() => {
+        if (viewMode === 'chat') {
+            // The flex container height transitions over 0.4s. 
+            // We lock the scroll to the bottom on every frame so the content
+            // stays perfectly glued to the bottom exactly matching the layout reflows.
+            const startTime = Date.now();
+            const animateScroll = () => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "instant", block: "end" });
+                if (Date.now() - startTime < 450) {
+                    requestAnimationFrame(animateScroll);
+                }
+            };
+            requestAnimationFrame(animateScroll);
+        }
+    }, [viewMode, activeChatId, isKeyboardVisible]);
 
 
     const handleBack = () => {
@@ -120,12 +147,12 @@ export default function MessengerView({ socket, data }) {
     if (viewMode === 'list') {
         return (
             <div className="chat-screen page-transition" style={{
-                height: '100%',
-                minHeight: '100dvh',
+                position: 'fixed',
+                inset: 0,
                 width: '100vw',
+                height: 'var(--app-height, 100dvh)',
                 overflow: 'hidden',
-                position: 'relative',
-                display: 'flex',       // New: Flex column
+                display: 'flex',
                 flexDirection: 'column',
                 background: theme.background,
                 color: theme.text
@@ -285,11 +312,13 @@ export default function MessengerView({ socket, data }) {
 
     return (
         <div className="chat-screen page-transition" style={{
-            height: '100%',
-            minHeight: '100dvh',
+            position: 'fixed',
+            inset: 0,
             width: '100vw',
+            height: 'var(--app-height, 100dvh)',
             overflow: 'hidden',
-            position: 'relative', // Ensure relative context
+            display: 'flex',
+            flexDirection: 'column',
             background: theme.background,
             color: theme.text
         }}>
@@ -404,6 +433,7 @@ export default function MessengerView({ socket, data }) {
                 >
                     {/* Messages Area - REFACTORED FOR SCROLLING */}
                     <div
+                        ref={scrollContainerRef}
                         className="chat-messages"
                         style={{
                             flex: 1,
@@ -415,7 +445,6 @@ export default function MessengerView({ socket, data }) {
                             height: '100%',             // Fill the flex parent
                             position: 'relative',
                             // PADDING RESTORED (removed padding: 0) and handled via padding-bottom/top spacing in inner
-                            scrollBehavior: 'smooth'
                         }}
                     >
                         {/* SCROLL WRAPPER - Inner content that grows */}
@@ -426,7 +455,7 @@ export default function MessengerView({ socket, data }) {
                             width: '100%',
                             minHeight: 'calc(100% + 1px)', // Force overscroll
                             paddingTop: `${(theme.headerTop || 10) + 70}px`, // Header space
-                            paddingBottom: '20px', // Default bottom padding
+                            paddingBottom: '20px', // Restored default padding!
                             gap: '15px'
                         }}>
                             {/* No top spacer needed here, content just flows */}
@@ -468,7 +497,7 @@ export default function MessengerView({ socket, data }) {
                         </div>
                     </div>
 
-                    {/* Input Area (Flow, sits above keyboard) */}
+                    {/* Sliding Input Area (In flex flow!) */}
                     <div
                         className="chat-input-area"
                         onClick={(e) => {
@@ -479,10 +508,8 @@ export default function MessengerView({ socket, data }) {
                             position: 'relative',
                             zIndex: 10,
                             flexShrink: 0, // Don't shrink input
-                            // borderTop: '1px solid rgba(255,255,255,0.1)',
-                            paddingBottom: '10px',
                             width: 'calc(100% - 20px)',
-                            margin: '0 10px 10px 10px', // Lift input up slightly
+                            margin: '0 10px', // Removed bottom margin, spacer handles it
                             borderRadius: '24px',
                             display: 'flex',
                             alignItems: 'center',
@@ -490,7 +517,7 @@ export default function MessengerView({ socket, data }) {
                             paddingRight: '15px',
                             backgroundColor: theme.primary,
                             paddingTop: '10px',
-                            transition: 'margin-bottom 0.3s ease' // Smooth transition if needed
+                            paddingBottom: '10px'
                         }}
                     >
                         <div
@@ -539,21 +566,47 @@ export default function MessengerView({ socket, data }) {
                         </button>
                     </div>
 
-                    {/* Keyboard (Flow, pushes content up via Flex) */}
+                    {/* Spacer that forces messages up dynamically */}
                     <div style={{
-                        height: isKeyboardVisible ? '300px' : '0px', // Animate Height
-                        overflow: 'hidden',
+                        height: isKeyboardVisible ? '300px' : '10px', // 10px static gap when closed
                         transition: 'height 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
-                        width: '100%',
                         flexShrink: 0,
-                        backgroundColor: '#1c1c1e' // Match KB color to avoid gaps
+                        width: '100%'
+                    }} />
+
+                    {/* Base Space Offset Slider Tracker */}
+                    <div style={{ height: `${35 + (theme.keyboardOffset || 0)}px`, flexShrink: 0, width: '100%' }} />
+
+                    {/* Absolute Keyboard Anchor */}
+                    <div style={{
+                        position: 'absolute',
+                        bottom: `${35 + (theme.keyboardOffset || 0)}px`,
+                        left: 0,
+                        right: 0,
+                        height: '300px',
+                        overflow: 'hidden',
+                        pointerEvents: 'none',
+                        zIndex: 100
                     }}>
-                        <VirtualKeyboard
-                            isActive={true} // Always render, hide via container height
-                            value={localInputValue}
-                            onChange={handleKeyboardChange}
-                            onSend={handleVirtualSend}
-                        />
+                        {/* Sliding Keyboard */}
+                        <div style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            height: '300px',
+                            transform: `translateY(${isKeyboardVisible ? '0px' : '300px'})`,
+                            transition: 'transform 0.4s cubic-bezier(0.32, 0.72, 0, 1)',
+                            pointerEvents: isKeyboardVisible ? 'auto' : 'none',
+                            backgroundColor: 'transparent'
+                        }}>
+                            <VirtualKeyboard
+                                isActive={true}
+                                value={localInputValue}
+                                onChange={handleKeyboardChange}
+                                onSend={handleVirtualSend}
+                            />
+                        </div>
                     </div>
                 </div>
             </div>

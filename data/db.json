@@ -112,6 +112,21 @@
           "id": 1771172802124,
           "text": "Hey! 👋",
           "sender": "match"
+        },
+        {
+          "id": 1771770404157,
+          "text": "hd",
+          "sender": "me"
+        },
+        {
+          "id": 1771770454719,
+          "text": "Hallo",
+          "sender": "me"
+        },
+        {
+          "id": 1771770467178,
+          "text": ":)",
+          "sender": "me"
         }
       ],
       "presets": [
@@ -344,6 +359,26 @@
           "id": 1770986753351,
           "text": "https://meet.google.com/hux-vfhb-iur",
           "sender": "match"
+        },
+        {
+          "id": 1771767844494,
+          "text": "df234;:->$",
+          "sender": "me"
+        },
+        {
+          "id": 1771767864276,
+          "text": "!?>   vbbAfgfDff",
+          "sender": "me"
+        },
+        {
+          "id": 1771767880181,
+          "text": "jssjfjHalsj",
+          "sender": "me"
+        },
+        {
+          "id": 1771767883156,
+          "text": "2663",
+          "sender": "me"
         }
       ],
       "presets": [
@@ -388,7 +423,7 @@
     }
   ],
   "actorAvatar": null,
-  "activeApp": "instagram",
+  "activeApp": "messenger",
   "datingProfiles": [
     {
       "id": "d6d83121-2a9c-45bf-8ea0-79f4ee37ef3b",
@@ -490,7 +525,8 @@
     "messageText": "#ffffff",
     "outgoing": "#7f1733",
     "incoming": "#e2a1a1",
-    "headerTop": 33
+    "headerTop": 14,
+    "keyboardOffset": -17
   },
   "messengerDissolveSettings": {
     "overlayColor": "rgba(67,55,55,0.46)",

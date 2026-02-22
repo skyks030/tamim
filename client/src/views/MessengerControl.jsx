@@ -269,6 +269,22 @@ export default function MessengerControl({ socket, data }) {
                                 style={{ width: '100%' }}
                             />
                         </div>
+
+                        {/* Keyboard Vertical Offset Slider */}
+                        <div style={{ marginTop: 15, paddingTop: 15, borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                            <label style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: '#888', marginBottom: 5 }}>
+                                <span>Keyboard Vertical Offset</span>
+                                <span>{data.messengerTheme?.keyboardOffset || 0}px</span>
+                            </label>
+                            <input
+                                type="range"
+                                min="-200"
+                                max="200"
+                                value={data.messengerTheme?.keyboardOffset || 0}
+                                onChange={(e) => socket.emit('control:update_messenger_theme', { keyboardOffset: parseInt(e.target.value) })}
+                                style={{ width: '100%' }}
+                            />
+                        </div>
                     </div>
 
                     {/* DISSOLVE SCREEN SETTINGS (Global) */}
