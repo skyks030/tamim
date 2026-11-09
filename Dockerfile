@@ -9,7 +9,7 @@ RUN npm run build
 # Stage 2: Setup the Server
 FROM node:18-alpine
 # Screen Recorder: ffmpeg (ProRes/H.264 encoding) + headless Chromium (virtual phone) + fonts incl. emoji
-RUN apk add --no-cache ffmpeg chromium nss freetype harfbuzz ca-certificates ttf-freefont font-noto font-noto-emoji
+RUN apk add --no-cache ffmpeg chromium nss freetype harfbuzz ca-certificates ttf-freefont font-noto-emoji
 ENV CHROMIUM_PATH=/usr/bin/chromium-browser
 WORKDIR /app
 COPY server/package*.json ./
