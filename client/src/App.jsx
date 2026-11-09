@@ -11,8 +11,20 @@ import RecorderView from './views/RecorderView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
+// "Mirror" copy used by the Screen Recorder for transparent recordings (/app?mirror=1):
+// display-only, never talks to the server, receives its data from the main copy.
+const IS_MIRROR = new URLSearchParams(window.location.search).has('mirror');
+
 // Global socket connection
-const socket = io();
+const socket = IS_MIRROR ? io({ autoConnect: false }) : io();
+if (IS_MIRROR) socket.emit = () => socket;
+
+// When embedded in the Screen Recorder, hand every data update to it (it forwards to the mirror copy)
+const publishToRecorder = (d) => {
+    try {
+        if (window.parent !== window) window.parent.__recorderOnData?.(d);
+    } catch { /* cross-origin parent */ }
+};
 
 function App() {
     const [view, setView] = useState('landing');
@@ -20,16 +32,30 @@ function App() {
 
     // Global poll & socket listener
     useEffect(() => {
+        if (IS_MIRROR) {
+            window.__setMirrorData = setData;
+            try {
+                const initial = window.parent?.__recorderGetData?.();
+                if (initial) setData(initial);
+            } catch { /* no recorder parent */ }
+            return () => { delete window.__setMirrorData; };
+        }
+
+        const apply = (d) => {
+            setData(d);
+            publishToRecorder(d);
+        };
+
         // 1. Socket Init
-        socket.on('init', (initialData) => setData(initialData));
-        socket.on('data:update', (updatedData) => setData(updatedData));
+        socket.on('init', apply);
+        socket.on('data:update', apply);
 
         // 2. Polling Fallback (Every 1000ms)
         const pollInterval = setInterval(() => {
             fetch('/api/data')
                 .then(res => res.json())
                 .then(latestData => {
-                    if (latestData) setData(latestData);
+                    if (latestData) apply(latestData);
                 })
                 .catch(err => console.error("Polling error", err));
         }, 1000);

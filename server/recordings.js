@@ -34,6 +34,9 @@ const FORMATS = {
   prores_lt: { label: 'Apple ProRes 422 LT (.mov)', ext: 'mov', encoder: 'prores_ks', args: PRORES(1, 'yuv422p10le') },
   prores_proxy: { label: 'Apple ProRes 422 Proxy (.mov)', ext: 'mov', encoder: 'prores_ks', args: PRORES(0, 'yuv422p10le') },
   prores_4444: { label: 'Apple ProRes 4444 (.mov)', ext: 'mov', encoder: 'prores_ks', args: PRORES(4, 'yuv444p10le') },
+  // Alpha formats – used with the transparent (difference matte) mode
+  prores_4444_alpha: { label: 'Apple ProRes 4444 mit Alpha (.mov)', ext: 'mov', encoder: 'prores_ks', alpha: true, args: [...PRORES(4, 'yuva444p10le'), '-alpha_bits', '16'] },
+  prores_4444xq_alpha: { label: 'Apple ProRes 4444 XQ mit Alpha (.mov)', ext: 'mov', encoder: 'prores_ks', alpha: true, args: [...PRORES(5, 'yuva444p10le'), '-alpha_bits', '16'] },
   h264_mov: { label: 'H.264 High Quality (.mov)', ext: 'mov', encoder: 'libx264', args: X264 },
   h264_mp4: { label: 'H.264 High Quality (.mp4)', ext: 'mp4', encoder: 'libx264', args: [...X264, '-movflags', '+faststart'] },
   hevc_mp4: { label: 'H.265 / HEVC (.mp4)', ext: 'mp4', encoder: 'libx265', args: ['-c:v', 'libx265', '-preset', 'medium', '-crf', '16', '-pix_fmt', 'yuv420p', '-tag:v', 'hvc1', '-movflags', '+faststart'] },
@@ -92,20 +95,40 @@ module.exports = function setupRecordings(app, io, uploadsDir) {
     const outFile = `${meta.baseName}.${fmt.ext}`;
     const outPath = path.join(RECORDINGS_DIR, outFile);
 
-    const filters = [`fps=${FPS_MAP[meta.fps] || '30'}`];
-    if (meta.targetWidth && meta.targetHeight) {
-      filters.push(`scale=${meta.targetWidth}:${meta.targetHeight}:flags=lanczos:out_color_matrix=bt709`, 'setsar=1');
+    const fps = FPS_MAP[meta.fps] || '30';
+    const pixFmt = fmt.args[fmt.args.indexOf('-pix_fmt') + 1];
+    // 4:2:2 / 4:2:0 need even dimensions
+    const scale = meta.targetWidth && meta.targetHeight
+      ? `scale=${meta.targetWidth}:${meta.targetHeight}:flags=lanczos:out_color_matrix=bt709,format=${pixFmt},setsar=1`
+      : `scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos:out_color_matrix=bt709,format=${pixFmt},setsar=1`;
+
+    let filterArgs;
+    if (meta.alphaMatte) {
+      // Difference matte: left half = app over black, right half = identical app over white.
+      //   alpha = 1 - (white - black), colour = black / alpha (un-premultiply)
+      const U = 'if(y,min(255,x*255/y),0)';
+      const graph = [
+        `[0:v]fps=${fps},format=gbrp,split=3[a][b][c]`,
+        `[a]crop=trunc(iw/2):ih:0:0[blk1]`,
+        `[c]crop=trunc(iw/2):ih:0:0[blk2]`,
+        `[b]crop=trunc(iw/2):ih:trunc(iw/2):0[wht]`,
+        // small thresholds swallow compression noise of the intermediate recording
+        `[wht][blk1]blend=all_mode=difference,format=gray,negate,lut=c0='if(gte(val,250),255,if(lte(val,5),0,val))',split=2[al1][al2]`,
+        `[al1]format=gbrp[alrgb]`,
+        `[blk2][alrgb]lut2=c0='${U}':c1='${U}':c2='${U}'[col]`,
+        `[col][al2]alphamerge,${scale}[out]`
+      ].join(';');
+      filterArgs = ['-filter_complex', graph, '-map', '[out]'];
     } else {
-      // 4:2:2 / 4:2:0 need even dimensions
-      filters.push('scale=trunc(iw/2)*2:trunc(ih/2)*2:flags=lanczos:out_color_matrix=bt709', 'setsar=1');
+      filterArgs = ['-vf', `fps=${fps},${scale}`];
     }
 
     const args = [
       '-hide_banner', '-y',
       '-i', rawPath,
       '-an',
-      '-vf', filters.join(','),
-      '-r', FPS_MAP[meta.fps] || '30',
+      ...filterArgs,
+      '-r', fps,
       ...fmt.args,
       '-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709',
       '-progress', 'pipe:1', '-nostats',
@@ -170,7 +193,7 @@ module.exports = function setupRecordings(app, io, uploadsDir) {
   app.get('/api/recordings/capabilities', (req, res) => {
     const formats = Object.entries(FORMATS)
       .filter(([, f]) => !f.encoder || caps.encoders.includes(f.encoder))
-      .map(([key, f]) => ({ key, label: f.label }));
+      .map(([key, f]) => ({ key, label: f.label, alpha: !!f.alpha }));
     res.json({ ffmpeg: caps.ffmpeg, formats, fps: FPS_ORDER });
   });
 
@@ -192,6 +215,11 @@ module.exports = function setupRecordings(app, io, uploadsDir) {
 
     const format = FORMATS[settings.format] ? settings.format : 'prores_hq';
     const fmt = FORMATS[format];
+    const alphaMatte = !!settings.alphaMatte;
+    if (alphaMatte && !fmt.alpha && format !== 'raw') {
+      fs.rm(req.file.path, { force: true }, () => { });
+      return res.status(400).json({ error: 'Für transparente Aufnahmen bitte ein Format mit Alpha wählen (ProRes 4444 mit Alpha).' });
+    }
     if (fmt.encoder && !caps.encoders.includes(fmt.encoder)) {
       fs.rm(req.file.path, { force: true }, () => { });
       return res.status(400).json({ error: `Encoder ${fmt.encoder} ist auf dem Server nicht verfügbar (ffmpeg installiert?).` });
@@ -217,6 +245,7 @@ module.exports = function setupRecordings(app, io, uploadsDir) {
       targetWidth: even(settings.targetWidth),
       targetHeight: even(settings.targetHeight),
       keepRaw: !!settings.keepRaw || format === 'raw',
+      alphaMatte,
       rawFile: `raw/${req.file.filename}`,
       file: null,
       size: null,

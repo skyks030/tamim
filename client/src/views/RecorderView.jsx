@@ -94,6 +94,51 @@ const fmtBytes = (b) => {
 
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
 
+function browserName() {
+    const ua = navigator.userAgent;
+    if (/Edg\//.test(ua)) return 'Edge';
+    if (/OPR\//.test(ua)) return 'Opera';
+    if (/Firefox\//.test(ua)) return 'Firefox';
+    if (/Chrome\//.test(ua)) return 'Chrome';
+    if (/Safari\//.test(ua)) return 'Safari';
+    return 'unbekannter Browser';
+}
+
+// Why screen capture can't work here (null = everything fine)
+function getCaptureIssue() {
+    if (!window.isSecureContext) {
+        return {
+            text: 'Die Seite ist über unverschlüsseltes HTTP geöffnet. Browser erlauben Bildschirmaufnahmen nur über HTTPS.',
+            link: `https://${window.location.hostname}${window.location.pathname}`
+        };
+    }
+    if (!navigator.mediaDevices?.getDisplayMedia) {
+        return { text: `${browserName()} unterstützt hier keine Bildschirmaufnahme. Bitte Chrome oder Edge am Desktop verwenden.` };
+    }
+    if (!('CropTarget' in window)) {
+        return { text: `${browserName()} unterstützt kein „Region Capture“ (Zuschneiden auf die Actor App). Bitte aktuelles Chrome oder Edge am Desktop verwenden.` };
+    }
+    return null;
+}
+
+// Element <-> path mapping, used to mirror scroll positions and input values into the white copy
+function getPath(el) {
+    const path = [];
+    while (el && el.parentElement) {
+        path.unshift(Array.prototype.indexOf.call(el.parentElement.children, el));
+        el = el.parentElement;
+    }
+    return path;
+}
+function resolvePath(doc, path) {
+    let el = doc.documentElement;
+    for (const i of path) {
+        el = el?.children?.[i];
+        if (!el) return null;
+    }
+    return el;
+}
+
 // ---------------------------------------------------------------------------
 // Small UI pieces
 // ---------------------------------------------------------------------------
@@ -177,6 +222,9 @@ function Check({ checked, onChange, children, disabled }) {
 
 export default function RecorderView({ socket }) {
     const iframeRef = useRef(null);
+    const mirrorRef = useRef(null);   // second copy on white (transparent mode)
+    const captureRef = useRef(null);  // element the capture is cropped to
+    const lastDataRef = useRef(null);
     const stageRef = useRef(null);
     const probeRef = useRef(null);
 
@@ -232,7 +280,10 @@ export default function RecorderView({ socket }) {
         []
     );
     const mimeInfo = supportedMimes.find(m => m.mime === settings.mime) || supportedMimes[0] || null;
-    const supportsRegionCapture = typeof window !== 'undefined' && 'CropTarget' in window && !!navigator.mediaDevices?.getDisplayMedia;
+    const captureIssue = useMemo(() => getCaptureIssue(), []);
+    const supportsRegionCapture = !captureIssue;
+    const transparent = settings.backdrop === 'transparent';
+    const phones = transparent ? 2 : 1;
 
     // -----------------------------------------------------------------------
     // Effects
@@ -318,13 +369,83 @@ export default function RecorderView({ socket }) {
         clearInterval(timerRef.current);
     }, []);
 
+    // Transparent mode: the app data is pushed from the main copy into the white copy in the same
+    // JS task, so both render identically (frame-synchronous) for the difference matte.
+    useEffect(() => {
+        window.__recorderOnData = (d) => {
+            lastDataRef.current = d;
+            try { mirrorRef.current?.contentWindow?.__setMirrorData?.(d); } catch { /* not ready */ }
+        };
+        window.__recorderGetData = () => lastDataRef.current;
+        return () => { delete window.__recorderOnData; delete window.__recorderGetData; };
+    }, []);
+
+    // Transparent mode: forward real mouse input, scrolling and typed text from the main copy to the white copy
+    useEffect(() => {
+        if (!transparent) return;
+        const frameA = iframeRef.current;
+        if (!frameA) return;
+        let detach = null;
+        const attach = () => {
+            detach?.();
+            const winA = frameA.contentWindow;
+            const docA = winA?.document;
+            if (!docA) return;
+            const winB = () => {
+                const w = mirrorRef.current?.contentWindow;
+                return w?.document ? w : null;
+            };
+            const onPointer = (e) => {
+                if (!e.isTrusted) return; // synthetic playback events are dispatched to both copies directly
+                const wb = winB();
+                if (!wb) return;
+                try {
+                    dispatchPointer(wb, { type: e.type, x: e.clientX / winA.innerWidth, y: e.clientY / winA.innerHeight, button: e.button, buttons: e.buttons }, false);
+                } catch (err) { console.error(err); }
+            };
+            const onScroll = (e) => {
+                const wb = winB();
+                if (!wb) return;
+                const el = e.target === docA ? docA.scrollingElement : e.target;
+                if (!el) return;
+                const twin = e.target === docA ? wb.document.scrollingElement : resolvePath(wb.document, getPath(el));
+                if (twin) { twin.scrollTop = el.scrollTop; twin.scrollLeft = el.scrollLeft; }
+            };
+            const onInput = (e) => {
+                const wb = winB();
+                const el = e.target;
+                if (!wb || !el || !('value' in el)) return;
+                const twin = resolvePath(wb.document, getPath(el));
+                if (!twin || !('value' in twin) || twin.value === el.value) return;
+                const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(twin), 'value')?.set;
+                if (setter) setter.call(twin, el.value); else twin.value = el.value;
+                twin.dispatchEvent(new wb.Event('input', { bubbles: true }));
+            };
+            const types = ['mousedown', 'mousemove', 'mouseup', 'click'];
+            types.forEach(t => docA.addEventListener(t, onPointer, true));
+            docA.addEventListener('scroll', onScroll, true);
+            docA.addEventListener('input', onInput, true);
+            detach = () => {
+                try {
+                    types.forEach(t => docA.removeEventListener(t, onPointer, true));
+                    docA.removeEventListener('scroll', onScroll, true);
+                    docA.removeEventListener('input', onInput, true);
+                } catch { /* iframe gone */ }
+            };
+        };
+        attach();
+        frameA.addEventListener('load', attach);
+        return () => { frameA.removeEventListener('load', attach); detach?.(); };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [transparent]);
+
     // If the selected format isn't available on the server, fall back
     useEffect(() => {
-        if (caps?.formats?.length && !caps.formats.find(f => f.key === settings.format)) {
-            set({ format: caps.formats[0].key });
-        }
+        if (!caps?.formats?.length) return;
+        const list = caps.formats.filter(f => !!f.alpha === transparent || f.key === 'raw');
+        if (list.length && !list.find(f => f.key === settings.format)) set({ format: list[0].key });
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [caps]);
+    }, [caps, transparent]);
 
     // -----------------------------------------------------------------------
     // Stage sizing
@@ -336,11 +457,11 @@ export default function RecorderView({ socket }) {
     sizeRef.current = cur;
     const pxW = Math.round(cur.w * dpr);
     const pxH = Math.round(cur.h * dpr);
-    const overflows = stageSize.w > 0 && (cur.w + 2 > stageSize.w || cur.h + 2 > stageSize.h);
+    const overflows = stageSize.w > 0 && (cur.w * phones + 2 > stageSize.w || cur.h + 2 > stageSize.h);
 
     function fitToStage(p = preset) {
         const a = p.nativeW ? p.nativeW / p.nativeH : (cur.w / cur.h);
-        const maxW = Math.max(160, stageSize.w - STAGE_PAD * 2);
+        const maxW = Math.max(160, (stageSize.w - STAGE_PAD * 2) / phones);
         const maxH = Math.max(200, stageSize.h - STAGE_PAD * 2);
         let h = maxH;
         let w = h * a;
@@ -360,7 +481,7 @@ export default function RecorderView({ socket }) {
             const a = p.nativeW / p.nativeH;
             let h = cur.h;
             let w = h * a;
-            const maxW = stageSize.w - STAGE_PAD * 2;
+            const maxW = (stageSize.w - STAGE_PAD * 2) / phones;
             if (maxW > 0 && w > maxW) { w = maxW; h = w / a; }
             setSize({ w: Math.round(w), h: Math.round(h) });
         }
@@ -388,7 +509,7 @@ export default function RecorderView({ socket }) {
         setResizing(true);
         const move = (ev) => {
             // Frame is centred, so it grows on both sides: factor 2 keeps the handle under the cursor
-            const dx = (ev.clientX - sx) * 2;
+            const dx = (ev.clientX - sx) * 2 / phones;
             const dy = (ev.clientY - sy) * 2;
             let w = Math.max(120, start.w + dx);
             let h = Math.max(160, start.h + dy);
@@ -412,12 +533,8 @@ export default function RecorderView({ socket }) {
 
     async function arm() {
         setError(null);
-        if (!navigator.mediaDevices?.getDisplayMedia) {
-            setError('Dieser Browser unterstützt keine Bildschirmaufnahme. Bitte Chrome oder Edge (Desktop) über HTTPS verwenden.');
-            return false;
-        }
-        if (!('CropTarget' in window)) {
-            setError('Region Capture wird nicht unterstützt. Bitte aktuelles Chrome oder Edge (Desktop) verwenden.');
+        if (captureIssue) {
+            setError(captureIssue.text);
             return false;
         }
         const fpsNum = Math.ceil(parseFloat(settings.fps));
@@ -435,18 +552,21 @@ export default function RecorderView({ socket }) {
                 surfaceSwitching: 'exclude',
                 monitorTypeSurfaces: 'exclude'
             });
-        } catch {
-            setError('Freigabe abgebrochen.');
+        } catch (e) {
+            console.error('getDisplayMedia failed', e);
+            setError(e?.name === 'NotAllowedError'
+                ? `Freigabe wurde abgelehnt oder abgebrochen (${e.name}: ${e.message}). Im Dialog „Diesen Tab“ wählen und „Teilen“ klicken.`
+                : `Freigabe fehlgeschlagen – ${e?.name || 'Fehler'}: ${e?.message || e}`);
             return false;
         }
         const [track] = stream.getVideoTracks();
         try {
-            const target = await window.CropTarget.fromElement(iframeRef.current);
+            const target = await window.CropTarget.fromElement(captureRef.current);
             await track.cropTo(target);
         } catch (e) {
             console.error(e);
             stream.getTracks().forEach(t => t.stop());
-            setError('Zuschneiden auf die Actor App fehlgeschlagen. Bitte im Freigabe-Dialog „Diesen Tab“ auswählen.');
+            setError(`Zuschneiden auf die Actor App fehlgeschlagen (${e?.name || 'Fehler'}: ${e?.message || e}). Bitte im Freigabe-Dialog „Diesen Tab“ auswählen – nicht ein anderes Fenster oder den ganzen Bildschirm.`);
             return false;
         }
         try { track.contentHint = 'detail'; } catch { /* optional */ }
@@ -501,6 +621,7 @@ export default function RecorderView({ socket }) {
             format: settings.format,
             fps: settings.fps,
             keepRaw: settings.keepRaw,
+            alphaMatte: transparent,
             target: outputTarget()
         };
 
@@ -553,6 +674,7 @@ export default function RecorderView({ socket }) {
             format: job.format,
             fps: job.fps,
             keepRaw: job.keepRaw,
+            alphaMatte: job.alphaMatte,
             durationMs: Math.round(durationMs),
             captureWidth: cap?.w,
             captureHeight: cap?.h,
@@ -647,7 +769,7 @@ export default function RecorderView({ socket }) {
         setActiveTakeId(take.id);
     }
 
-    function dispatchPointer(win, ev) {
+    function dispatchPointer(win, ev, withGhost = true) {
         const doc = win.document;
         const x = ev.x * win.innerWidth;
         const y = ev.y * win.innerHeight;
@@ -662,7 +784,7 @@ export default function RecorderView({ socket }) {
             target.dispatchEvent(new win.PointerEvent(pointerType, { ...init, pointerId: 1, pointerType: 'mouse', isPrimary: true }));
         }
         target.dispatchEvent(new win.MouseEvent(ev.type, init));
-        if (settings.showGhost) {
+        if (withGhost && settings.showGhost) {
             const down = ev.type === 'mousedown' || (ev.type === 'mousemove' && (ev.buttons & 1) === 1);
             setGhost({ x: ev.x, y: ev.y, down });
         }
@@ -682,6 +804,10 @@ export default function RecorderView({ socket }) {
             const now = performance.now() - start;
             while (i < take.events.length && take.events[i].t <= now) {
                 try { dispatchPointer(win, take.events[i]); } catch (e) { console.error(e); }
+                const mirrorWin = transparent ? mirrorRef.current?.contentWindow : null;
+                if (mirrorWin?.document) {
+                    try { dispatchPointer(mirrorWin, take.events[i], false); } catch (e) { console.error(e); }
+                }
                 i++;
             }
             if (now - state.lastUi > 100) { state.lastUi = now; setPlayPos(Math.min(1, now / (take.duration || 1))); }
@@ -751,7 +877,8 @@ export default function RecorderView({ socket }) {
     // Render
     // -----------------------------------------------------------------------
 
-    const formats = caps?.formats?.length ? caps.formats : [{ key: 'raw', label: 'Original Browser-Aufnahme (kein Transcode)' }];
+    const allFormats = caps?.formats?.length ? caps.formats : [{ key: 'raw', label: 'Original Browser-Aufnahme (kein Transcode)' }];
+    const formats = allFormats.filter(f => !!f.alpha === transparent || f.key === 'raw');
     const fpsOptions = caps?.fps?.length ? caps.fps : FPS_FALLBACK;
     const target = outputTarget();
     const takeSizeMismatch = activeTake && activeTake.width && (Math.abs(activeTake.width - cur.w) > 2 || Math.abs(activeTake.height - cur.h) > 2);
@@ -795,7 +922,7 @@ export default function RecorderView({ socket }) {
                         <button style={btn('ghost', { padding: '4px 8px' })} onClick={disarm} title="Freigabe beenden"><X size={12} /></button>
                     )}
                     {!armed && (
-                        <button style={btn('ghost', { padding: '4px 10px' })} onClick={arm} disabled={!supportsRegionCapture}>Freigabe vorbereiten</button>
+                        <button style={btn('ghost', { padding: '4px 10px' })} onClick={() => arm()}>Freigabe vorbereiten</button>
                     )}
                 </div>
 
@@ -809,8 +936,7 @@ export default function RecorderView({ socket }) {
                 {!isRecording ? (
                     <button
                         onClick={startRecording}
-                        disabled={!supportsRegionCapture}
-                        style={btn('pink', { padding: '10px 22px', fontSize: '0.95rem', borderRadius: 999, opacity: supportsRegionCapture ? 1 : 0.4 })}
+                        style={btn('pink', { padding: '10px 22px', fontSize: '0.95rem', borderRadius: 999, opacity: supportsRegionCapture ? 1 : 0.5 })}
                     >
                         <Circle size={16} fill="white" /> REC
                     </button>
@@ -828,8 +954,11 @@ export default function RecorderView({ socket }) {
             {(!supportsRegionCapture || (caps && !caps.ffmpeg) || error) && (
                 <div style={{ margin: '8px 12px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {!supportsRegionCapture && (
-                        <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', fontSize: '0.82rem' }}>
-                            Aufnahme benötigt <b>Chrome oder Edge (Desktop, ab Version 104)</b> und eine HTTPS-Verbindung. Vorschau und Zeiger-Aufnahme funktionieren trotzdem.
+                        <div style={{ padding: '8px 12px', borderRadius: 10, background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+                            <span><b>Aufnahme hier nicht möglich:</b> {captureIssue.text} Vorschau und Zeiger-Aufnahme funktionieren trotzdem.</span>
+                            {captureIssue.link && (
+                                <a href={captureIssue.link} style={{ ...btn('pink'), textDecoration: 'none' }}>Per HTTPS öffnen</a>
+                            )}
                         </div>
                     )}
                     {caps && !caps.ffmpeg && (
@@ -927,11 +1056,19 @@ export default function RecorderView({ socket }) {
                             <button style={btn('ghost', { flex: 1 })} disabled={locked} onClick={() => fitToStage()}><Maximize2 size={14} /> Einpassen</button>
                             <button style={btn('ghost', { flex: 1 })} disabled={locked || !preset.nativeW} onClick={setDeviceOneToOne} title="Pixelgenau auf die native Geräteauflösung setzen">1:1 Gerät</button>
                         </div>
-                        <Field label="Hintergrund hinter der Actor App" hint="Sichtbar, wenn der App-Hintergrund transparent ist (z. B. Grün für Keying). Wird mit aufgenommen.">
-                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
-                                <input type="color" value={settings.backdrop} onChange={e => set({ backdrop: e.target.value })} style={{ width: 36, height: 30, border: 'none', background: 'none', padding: 0, cursor: 'pointer' }} />
+                        <Field label="Hintergrund hinter der Actor App" hint={transparent
+                            ? 'Transparent: Die App läuft zweimal (vor Schwarz und vor Weiß). Daraus wird beim Export ein echter Alpha-Kanal berechnet. Im Dating-Theme den Background-Alpha auf 0 % stellen.'
+                            : 'Sichtbar, wenn der App-Hintergrund transparent ist. Wird mit aufgenommen.'}>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center', flexWrap: 'wrap' }}>
+                                <input type="color" value={transparent ? '#000000' : settings.backdrop} disabled={locked} onChange={e => set({ backdrop: e.target.value })} style={{ width: 36, height: 30, border: 'none', background: 'none', padding: 0, cursor: 'pointer' }} />
+                                <button onClick={() => set({ backdrop: 'transparent' })} disabled={locked} title="Transparent (Alpha-Kanal)"
+                                    style={{ height: 24, padding: '0 8px', borderRadius: 6, color: 'white', fontSize: '0.7rem', fontWeight: 700, cursor: 'pointer',
+                                        background: 'repeating-conic-gradient(#999 0% 25%, #555 0% 50%) 50% / 8px 8px',
+                                        border: transparent ? `2px solid ${PINK}` : '1px solid rgba(255,255,255,0.25)', textShadow: '0 1px 2px #000' }}>
+                                    Transparent
+                                </button>
                                 {['#000000', '#ffffff', '#00ff00', '#0000ff'].map(c => (
-                                    <button key={c} onClick={() => set({ backdrop: c })} title={c}
+                                    <button key={c} onClick={() => set({ backdrop: c })} title={c} disabled={locked}
                                         style={{ width: 24, height: 24, borderRadius: 6, background: c, border: settings.backdrop === c ? `2px solid ${PINK}` : '1px solid rgba(255,255,255,0.25)', cursor: 'pointer' }} />
                                 ))}
                             </div>
@@ -948,44 +1085,59 @@ export default function RecorderView({ socket }) {
                         <div style={{ margin: 'auto', padding: STAGE_PAD, flexShrink: 0 }}>
                             <div style={{
                                 position: 'relative',
-                                width: cur.w,
-                                height: cur.h,
-                                background: settings.backdrop,
-                                // ring is outside the iframe box, so it is not part of the cropped capture
+                                // ring is outside the capture box, so it is not part of the cropped capture
                                 boxShadow: isRecording
                                     ? `0 0 0 2px ${PINK}, 0 0 30px rgba(236,72,153,0.45)`
                                     : `0 0 0 1px rgba(249,168,212,0.5), 0 20px 50px rgba(0,0,0,0.5)`
                             }}>
-                                <iframe
-                                    ref={iframeRef}
-                                    src="/app"
-                                    title="Actor App"
-                                    allow="autoplay; microphone; geolocation"
-                                    style={{
-                                        position: 'absolute', inset: 0, width: '100%', height: '100%',
-                                        border: 'none', display: 'block', background: 'transparent',
-                                        colorScheme: 'normal',
-                                        pointerEvents: resizing ? 'none' : 'auto'
-                                    }}
-                                />
+                                {/* CAPTURE AREA – exactly the phone(s), nothing else */}
+                                <div ref={captureRef} style={{ display: 'flex', width: cur.w * phones, height: cur.h }}>
+                                    {[0, 1].slice(0, phones).map(idx => (
+                                        <div key={idx} style={{
+                                            position: 'relative', width: cur.w, height: cur.h, flexShrink: 0,
+                                            background: transparent ? (idx === 0 ? '#000000' : '#ffffff') : settings.backdrop
+                                        }}>
+                                            <iframe
+                                                ref={idx === 0 ? iframeRef : mirrorRef}
+                                                src={idx === 0 ? '/app' : '/app?mirror=1'}
+                                                title={idx === 0 ? 'Actor App' : 'Actor App (Spiegel auf Weiß)'}
+                                                allow={idx === 0 ? 'autoplay; microphone; geolocation' : 'autoplay'}
+                                                tabIndex={idx === 0 ? 0 : -1}
+                                                style={{
+                                                    position: 'absolute', inset: 0, width: '100%', height: '100%',
+                                                    border: 'none', display: 'block', background: 'transparent',
+                                                    colorScheme: 'normal',
+                                                    // the white copy only mirrors the main copy
+                                                    pointerEvents: resizing || idx === 1 ? 'none' : 'auto'
+                                                }}
+                                            />
+                                            {/* Optional ghost touch indicator (drawn in both copies so the matte stays clean) */}
+                                            {ghost && settings.showGhost && (
+                                                <div style={{
+                                                    position: 'absolute',
+                                                    left: ghost.x * cur.w, top: ghost.y * cur.h,
+                                                    width: ghost.down ? 34 : 26, height: ghost.down ? 34 : 26,
+                                                    transform: 'translate(-50%, -50%)',
+                                                    borderRadius: '50%',
+                                                    background: ghost.down ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)',
+                                                    border: '2px solid rgba(255,255,255,0.8)',
+                                                    pointerEvents: 'none',
+                                                    transition: 'width 0.1s, height 0.1s, background 0.1s'
+                                                }} />
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {transparent && (
+                                    <>
+                                        <div style={{ position: 'absolute', top: -20, left: 0, width: cur.w, textAlign: 'center', fontSize: '0.68rem', opacity: 0.6, pointerEvents: 'none' }}>Bedienen · vor Schwarz</div>
+                                        <div style={{ position: 'absolute', top: -20, left: cur.w, width: cur.w, textAlign: 'center', fontSize: '0.68rem', opacity: 0.6, pointerEvents: 'none' }}>Spiegel · vor Weiß</div>
+                                    </>
+                                )}
 
                                 {/* Blocks real mouse input while a pointer take is replayed (invisible in capture) */}
                                 {playing && <div style={{ position: 'absolute', inset: 0, cursor: 'not-allowed' }} />}
-
-                                {/* Optional ghost touch indicator */}
-                                {ghost && settings.showGhost && (
-                                    <div style={{
-                                        position: 'absolute',
-                                        left: ghost.x * cur.w, top: ghost.y * cur.h,
-                                        width: ghost.down ? 34 : 26, height: ghost.down ? 34 : 26,
-                                        transform: 'translate(-50%, -50%)',
-                                        borderRadius: '50%',
-                                        background: ghost.down ? 'rgba(255,255,255,0.45)' : 'rgba(255,255,255,0.2)',
-                                        border: '2px solid rgba(255,255,255,0.8)',
-                                        pointerEvents: 'none',
-                                        transition: 'width 0.1s, height 0.1s, background 0.1s'
-                                    }} />
-                                )}
 
                                 {/* Resize handle (outside the capture area) */}
                                 {!locked && (
@@ -1002,7 +1154,7 @@ export default function RecorderView({ socket }) {
 
                                 {pointerRec && (
                                     <div style={{
-                                        position: 'absolute', top: -30, left: 0, right: 0, textAlign: 'center',
+                                        position: 'absolute', top: transparent ? -40 : -30, left: 0, right: 0, textAlign: 'center',
                                         fontSize: '0.75rem', color: PINK_LIGHT, pointerEvents: 'none'
                                     }}>
                                         <span style={{ animation: 'recBlink 1s infinite' }}>●</span> Zeiger wird aufgezeichnet – Esc zum Beenden
@@ -1020,7 +1172,8 @@ export default function RecorderView({ socket }) {
                         </div>
                         <div style={{ fontSize: '0.78rem', opacity: 0.7, lineHeight: 1.5 }}>
                             <div>CSS {cur.w} × {cur.h} · DPR {Math.round(dpr * 100) / 100}</div>
-                            {captureSize && <div>Stream: {captureSize.w} × {captureSize.h} px</div>}
+                            {captureSize && <div>Stream: {captureSize.w} × {captureSize.h} px{transparent ? ' (Schwarz + Weiß)' : ''}</div>}
+                            {transparent && <div style={{ color: PINK_LIGHT }}>Alpha-Kanal: Differenz-Matte</div>}
                         </div>
                         <div style={{ fontSize: '0.78rem', opacity: 0.7, lineHeight: 1.5 }}>
                             <div>Export: {target ? `${target.w} × ${target.h} px` : 'nativ'}</div>
