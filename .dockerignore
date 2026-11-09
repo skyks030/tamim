@@ -1,0 +1,11 @@
+# Never copy local dependencies/build output/data into the image
+**/node_modules
+client/dist
+server/client_build
+data
+uploads
+server/data
+server/uploads
+certs
+.git
+**/.DS_Store

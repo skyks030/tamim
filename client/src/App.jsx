@@ -11,20 +11,59 @@ import RecorderView from './views/RecorderView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
-// "Mirror" copy used by the Screen Recorder for transparent recordings (/app?mirror=1):
-// display-only, never talks to the server, receives its data from the main copy.
-const IS_MIRROR = new URLSearchParams(window.location.search).has('mirror');
+// Sandbox mode (/app?sandbox=1) is used by the server-side Screen Recorder to render videos frame by frame.
+// It never talks to the server: data is injected, server broadcasts are replayed from the recorded timeline,
+// and (for pointer takes) the app's own actions are applied by a local copy of the server logic.
+const IS_SANDBOX = new URLSearchParams(window.location.search).has('sandbox');
 
 // Global socket connection
-const socket = IS_MIRROR ? io({ autoConnect: false }) : io();
-if (IS_MIRROR) socket.emit = () => socket;
+const socket = IS_SANDBOX ? io({ autoConnect: false }) : io();
 
-// When embedded in the Screen Recorder, hand every data update to it (it forwards to the mirror copy)
-const publishToRecorder = (d) => {
-    try {
-        if (window.parent !== window) window.parent.__recorderOnData?.(d);
-    } catch { /* cross-origin parent */ }
-};
+let sandboxData = IS_SANDBOX ? (window.__TAMIM_SANDBOX__ || null) : null;
+let sandboxSetData = null;
+
+function sandboxReduce(d, event, p) {
+    if (!d) return null;
+    const n = JSON.parse(JSON.stringify(d));
+    switch (event) {
+        case 'actor:dating_swipe':
+            n.activeDatingProfileId = p;
+            return n;
+        case 'actor:send_message': {
+            const chat = n.chats?.find(c => c.id === p?.chatId);
+            if (!chat) return null;
+            chat.messages.push({ id: Date.now(), text: p.text, sender: 'me' });
+            return n;
+        }
+        case 'control:select_chat':
+            n.activeChatId = p;
+            return n;
+        case 'control:update_lockscreen_settings':
+            n.lockScreenSettings = { ...n.lockScreenSettings, ...p };
+            return n;
+        default:
+            return null;
+    }
+}
+
+if (IS_SANDBOX) {
+    socket.emit = (event, payload) => {
+        if (window.__TAMIM_SANDBOX_REDUCER__) {
+            const next = sandboxReduce(sandboxData, event, payload);
+            if (next) { sandboxData = next; sandboxSetData?.(next); }
+        }
+        return socket;
+    };
+    // Replays a recorded server broadcast
+    window.__tamimServerEvent = (event, payload) => {
+        if (event === 'data:update' || event === 'init') {
+            sandboxData = payload;
+            sandboxSetData?.(payload);
+            return;
+        }
+        (socket.listeners(event) || []).forEach(fn => { try { fn(payload); } catch (e) { console.error(e); } });
+    };
+}
 
 function App() {
     const [view, setView] = useState('landing');
@@ -32,19 +71,13 @@ function App() {
 
     // Global poll & socket listener
     useEffect(() => {
-        if (IS_MIRROR) {
-            window.__setMirrorData = setData;
-            try {
-                const initial = window.parent?.__recorderGetData?.();
-                if (initial) setData(initial);
-            } catch { /* no recorder parent */ }
-            return () => { delete window.__setMirrorData; };
+        if (IS_SANDBOX) {
+            sandboxSetData = setData;
+            if (sandboxData) setData(sandboxData);
+            return () => { sandboxSetData = null; };
         }
 
-        const apply = (d) => {
-            setData(d);
-            publishToRecorder(d);
-        };
+        const apply = (d) => setData(d);
 
         // 1. Socket Init
         socket.on('init', apply);

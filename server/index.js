@@ -982,8 +982,8 @@ app.post('/api/control/app-name', (req, res) => {
   }
 });
 
-// Screen Recorder (upload + ffmpeg transcode). Must be registered before the SPA catch-all.
-require('./recordings')(app, io, UPLOADS_DIR);
+// Server-side Screen Recorder (virtual phone + frame-exact rendering). Must be registered before the SPA catch-all.
+require('./recorder')(app, io, UPLOADS_DIR, () => db);
 
 // Handle React routing
 app.get('*', (req, res) => {
