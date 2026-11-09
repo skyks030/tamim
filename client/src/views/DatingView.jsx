@@ -20,6 +20,7 @@ export default function DatingView({ data, socket }) {
 
     // Match Animation State
     const [showMatch, setShowMatch] = useState(false);
+    const [matchClosing, setMatchClosing] = useState(false);
 
     const startX = useRef(0);
 
@@ -29,6 +30,7 @@ export default function DatingView({ data, socket }) {
         setDragDelta(0);
         setIsDragging(false);
         setShowMatch(false); // Clear match screen if we were stuck there
+        setMatchClosing(false);
     }, [activeDatingProfileId]);
 
     // Sync Meta Theme Color & Body Background for Notch/Overscroll support
@@ -54,6 +56,8 @@ export default function DatingView({ data, socket }) {
             // Wait longer in Match Screen before proceeding?
             // Actually, we should probably wait for user interaction or a timeout to close match screen.
             // But for simple flow, let's show it for 3 seconds then move on.
+            // fade the match screen out before the next profile appears
+            setTimeout(() => setMatchClosing(true), 3400);
             setTimeout(() => {
                 advanceProfile();
             }, 4000);
@@ -162,6 +166,35 @@ export default function DatingView({ data, socket }) {
                     opacity: 0; /* Starte unsichtbar */
                     animation-delay: 0.2s; /* Warte kurz bis Karte stabil ist */
                 }
+                @keyframes cardShadowIn {
+                    from { box-shadow: 0 10px 30px rgba(0,0,0,0); }
+                    to { box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+                }
+                @keyframes nextCardIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes matchOverlayIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes matchOverlayOut {
+                    from { opacity: 1; }
+                    to { opacity: 0; }
+                }
+                @keyframes matchPop {
+                    0% { opacity: 0; transform: scale(0.6); }
+                    70% { opacity: 1; transform: scale(1.08); }
+                    100% { opacity: 1; transform: scale(1); }
+                }
+                @keyframes matchRise {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes matchRiseText {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 0.9; transform: translateY(0); }
+                }
                 @keyframes pulseHeart {
                     0% { transform: scale(1); }
                     50% { transform: scale(1.1); }
@@ -190,6 +223,7 @@ export default function DatingView({ data, socket }) {
                             backgroundColor: '#333',
                             transform: (isDragging || swipeState) ? 'scale(1)' : 'scale(0.95)',
                             transition: 'transform 0.5s ease',
+                            animation: 'nextCardIn 0.5s ease-out both',
                             zIndex: 1
                         }}
                     ></div>
@@ -213,6 +247,7 @@ export default function DatingView({ data, socket }) {
                         backgroundColor: '#444',
                         zIndex: 2,
                         boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
+                        animation: 'cardShadowIn 0.5s ease-out both',
                         transformOrigin: 'bottom center',
                         ...getCardStyle()
                     }}
@@ -321,7 +356,7 @@ export default function DatingView({ data, socket }) {
                     background: data.datingMatchSettings?.overlayColor || 'rgba(0,0,0,0.85)',
                     display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
                     zIndex: 100,
-                    animation: 'fadeIn 0.3s'
+                    animation: matchClosing ? 'matchOverlayOut 0.5s ease-in both' : 'matchOverlayIn 0.4s ease-out both'
                 }}>
                     {data.datingMatchSettings?.overlayImage && (
                         <img
@@ -331,7 +366,7 @@ export default function DatingView({ data, socket }) {
                                 maxHeight: '30vh', // Prevent it from taking over entire screen height 
                                 marginBottom: 20,
                                 objectFit: 'contain',
-                                animation: 'pulseHeart 2s infinite ease-in-out'
+                                animation: 'matchPop 0.6s ease-out 0.1s both, pulseHeart 2s ease-in-out 0.7s infinite'
                             }}
                             alt="Match Overlay"
                         />
@@ -346,19 +381,19 @@ export default function DatingView({ data, socket }) {
                         marginTop: 0,
                         textAlign: 'center',
                         display: data.datingMatchSettings?.title === "" ? 'none' : 'block', // Hide if explicitly empty
-                        animation: 'pulseHeart 2s infinite ease-in-out'
+                        animation: 'matchPop 0.6s ease-out 0.15s both, pulseHeart 2s ease-in-out 0.75s infinite'
                     }}>
                         {data.datingMatchSettings?.title ?? "It's a Match!"}
                     </h1>
 
-                    <div style={{ display: 'flex', gap: 30, alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: 30, alignItems: 'center', animation: 'matchRise 0.5s ease-out 0.35s both' }}>
                         <div style={{
                             width: 100, height: 100, borderRadius: '50%',
                             background: currentProfile.imageUrl ? `url(${currentProfile.imageUrl}) center/cover` : currentProfile.avatarColor || '#444',
                             border: '4px solid white',
                             boxShadow: '0 10px 25px rgba(0,0,0,0.2)'
                         }}></div>
-                        <Heart size={50} fill="white" color="white" style={{ animation: 'pulseHeart 1.5s infinite' }} />
+                        <Heart size={50} fill="white" color="white" style={{ animation: 'matchPop 0.5s ease-out 0.5s both, pulseHeart 1.5s ease-in-out 1s infinite' }} />
                         {/* ACTOR AVATAR (You) */}
                         <div style={{
                             width: 100, height: 100, borderRadius: '50%',
@@ -371,7 +406,7 @@ export default function DatingView({ data, socket }) {
                             {!data.actorAvatar && "You"}
                         </div>
                     </div>
-                    <p style={{ color: 'white', marginTop: 40, fontSize: '1.2rem', fontWeight: '500', opacity: 0.9, textAlign: 'center', padding: '0 20px' }}>
+                    <p style={{ color: 'white', marginTop: 40, fontSize: '1.2rem', fontWeight: '500', opacity: 0.9, textAlign: 'center', padding: '0 20px', animation: 'matchRiseText 0.5s ease-out 0.55s both' }}>
                         {(data.datingMatchSettings?.subtitle ?? "You and {name} liked each other.").replace("{name}", currentProfile.name)}
                     </p>
 
