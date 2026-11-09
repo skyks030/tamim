@@ -39,6 +39,7 @@ const DEFAULT_SETTINGS = {
     format: 'prores_hq',
     fps: '30',
     transparent: false,
+    alphaMode: 'premultiplied',
     namePrefix: 'Take',
     leadIn: 500,
     tail: 1000
@@ -130,7 +131,16 @@ function Banner({ tone = 'warn', children }) {
 // Main view
 // ---------------------------------------------------------------------------
 
-export default function RecorderView({ socket }) {
+// alpha (0..1) of a CSS colour string
+function colorAlpha(c) {
+    if (!c) return 1;
+    if (c === 'transparent') return 0;
+    if (c.startsWith('#')) return c.length === 9 ? parseInt(c.slice(7, 9), 16) / 255 : 1;
+    const parts = c.match(/[\d.]+/g);
+    return parts && parts.length >= 4 ? parseFloat(parts[3]) : 1;
+}
+
+export default function RecorderView({ socket, data }) {
     const canvasRef = useRef(null);
     const stageRef = useRef(null);
 
@@ -360,7 +370,7 @@ export default function RecorderView({ socket }) {
     // -----------------------------------------------------------------------
     // REC
     // -----------------------------------------------------------------------
-    const renderSettings = () => ({ format: settings.format, fps: settings.fps, transparent: settings.transparent, dpr: settings.dpr });
+    const renderSettings = () => ({ format: settings.format, fps: settings.fps, transparent: settings.transparent, alphaMode: settings.alphaMode, dpr: settings.dpr });
     const nextName = () => {
         const n = `${settings.namePrefix || 'Take'}_${String(counter).padStart(3, '0')}`;
         setCounter(c => c + 1);
@@ -496,6 +506,25 @@ export default function RecorderView({ socket }) {
                 )}
             </div>
 
+            {settings.transparent && data && (data.activeApp !== 'dating' || colorAlpha(data.datingTheme?.background) > 0) && (
+                <div style={{ margin: '8px 12px 0' }}>
+                    <Banner tone="warn">
+                        <span style={{ flex: 1 }}>
+                            {data.activeApp !== 'dating'
+                                ? 'Transparenz ist an, aber gerade ist nicht die Dating-App aktiv. Nur die Dating-App hat einen einstellbar transparenten Hintergrund – das Video wäre komplett deckend.'
+                                : `Transparenz ist an, aber der Hintergrund der Dating-App ist zu ${Math.round(colorAlpha(data.datingTheme?.background) * 100)} % deckend – das Video hätte keinen durchsichtigen Hintergrund.`}
+                        </span>
+                        {data.activeApp === 'dating' && (
+                            <button style={btn('pink')} onClick={() => {
+                                const m = (data.datingTheme?.background || '#111111').match(/[\da-f]{2}/gi);
+                                const rgb = (data.datingTheme?.background || '').startsWith('#') && m ? m.slice(0, 3).map(h => parseInt(h, 16)) : ((data.datingTheme?.background || '').match(/[\d.]+/g) || [17, 17, 17]).slice(0, 3);
+                                socket.emit('control:update_dating_theme', { background: `rgba(${rgb.join(',')},0)` });
+                            }}>Hintergrund jetzt transparent stellen</button>
+                        )}
+                    </Banner>
+                </div>
+            )}
+
             {(serverProblem || srv?.error || error) && (
                 <div style={{ margin: '8px 12px 0', display: 'flex', flexDirection: 'column', gap: 6 }}>
                     {caps && !caps.chromium && <Banner tone="error">Auf dem Server ist kein Chromium installiert. Bitte das Update mit <code>bash update.sh</code> neu bauen.</Banner>}
@@ -549,6 +578,14 @@ export default function RecorderView({ socket }) {
                             <div style={{ fontSize: '0.7rem', opacity: 0.6, lineHeight: 1.4, marginTop: -6 }}>
                                 Im Control Center beim Dating-Theme den Background-Alpha auf 0 % stellen – alles Durchsichtige der App wird im Video transparent. Die Vorschau zeigt den Hintergrund trotzdem an.
                             </div>
+                        )}
+                        {settings.transparent && settings.format !== 'png_mov' && (
+                            <Field label="Alpha-Modus" hint="Premultiplied ist der Standard für ProRes 4444 (Final Cut, Premiere, Resolve, After Effects). Straight nur wählen, wenn das Schnittprogramm es ausdrücklich verlangt.">
+                                <select className="rec-select" style={inputStyle} value={settings.alphaMode} disabled={recording} onChange={e => set({ alphaMode: e.target.value })}>
+                                    <option value="premultiplied">Premultiplied (empfohlen)</option>
+                                    <option value="straight">Straight</option>
+                                </select>
+                            </Field>
                         )}
                         <Field label="Codec / Container">
                             <select className="rec-select" style={inputStyle} value={settings.format} disabled={recording} onChange={e => set({ format: e.target.value })}>
@@ -676,6 +713,11 @@ export default function RecorderView({ socket }) {
                                             {(r.formatLabel || r.format).replace(/\s*\(.*\)$/, '')} · {r.fps} fps · {(r.durationMs / 1000).toFixed(1)} s
                                             {r.width ? ` · ${r.width}×${r.height}` : r.viewport ? ` · ${Math.round(r.viewport.w * r.viewport.dpr)}×${Math.round(r.viewport.h * r.viewport.dpr)}` : ''}
                                             {r.size ? ` · ${fmtBytes(r.size)}` : ''}
+                                            {r.transparent && typeof r.transparentPct === 'number' && (
+                                                <span style={{ color: r.transparentPct > 0 ? '#86efac' : '#fbbf24' }}>
+                                                    {r.transparentPct > 0 ? ` · Alpha: ${r.transparentPct} % transparent` : ' · ⚠ Alpha komplett deckend'}
+                                                </span>
+                                            )}
                                         </div>
                                     </div>
                                     {r.status === 'done' && r.file && (

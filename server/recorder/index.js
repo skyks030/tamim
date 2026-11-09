@@ -15,6 +15,8 @@ const fs = require('fs');
 const { spawn, execFile } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
 const virtualTimeScript = require('./virtualTime');
+let sharp = null;
+try { sharp = require('sharp'); } catch { /* optional: only used to measure transparency */ }
 
 let puppeteer = null;
 try { puppeteer = require('puppeteer-core'); } catch { /* reported via state */ }
@@ -350,6 +352,14 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
 
       // ffmpeg reads lossless PNG frames from stdin
       const r = `${num}/${den}`;
+      // Chrome delivers STRAIGHT alpha. Most video tools expect PREMULTIPLIED alpha for ProRes 4444 – with straight
+      // alpha, soft shadows/glows turn into large hard-edged colour blobs as soon as alpha is ignored or misread.
+      // (ffmpeg's premultiply filter is unreliable here, so colour × alpha is done with a 2D lookup table.)
+      const premultiply = transparent && fmt.encoder !== 'png' && meta.alphaMode !== 'straight';
+      const PM = 'x*y/255';
+      const pre = premultiply
+        ? `format=rgba,split=3[c][a1][a2];[a1]alphaextract,format=gbrp[al];[c]format=gbrp[col];[col][al]lut2=c0='${PM}':c1='${PM}':c2='${PM}'[pm];[a2]alphaextract[am];[pm][am]alphamerge,`
+        : '';
       const chain = [
         'crop=trunc(iw/2)*2:trunc(ih/2)*2:0:0', // 4:2:2 needs even sizes – crop 1px instead of resampling
         meta.targetWidth && meta.targetHeight ? `scale=${meta.targetWidth}:${meta.targetHeight}:flags=lanczos` : null,
@@ -359,7 +369,7 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
       const args = [
         '-hide_banner', '-y',
         '-f', 'image2pipe', '-framerate', r, '-c:v', 'png', '-i', 'pipe:0',
-        '-vf', chain,
+        '-filter_complex', `[0:v]${pre}${chain}[out]`, '-map', '[out]',
         '-r', r,
         ...fmt.args,
         ...(fmt.encoder === 'png' ? [] : ['-color_primaries', 'bt709', '-color_trc', 'bt709', '-colorspace', 'bt709']),
@@ -401,7 +411,18 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
         else await page.evaluate(() => window.__vt.settle());
 
         const shot = await cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true, captureBeyondViewport: false });
-        await write(Buffer.from(shot.data, 'base64'));
+        const png = Buffer.from(shot.data, 'base64');
+        await write(png);
+
+        // Measure how much of the picture is actually transparent (first + middle frame), shown in the UI
+        if (transparent && sharp && (i === 0 || i === Math.floor(totalFrames / 2))) {
+          try {
+            const st = await sharp(png).ensureAlpha().stats();
+            const alpha = st.channels[3];
+            const pct = alpha ? Math.round((1 - alpha.mean / 255) * 100) : 0;
+            meta.transparentPct = Math.max(meta.transparentPct ?? 0, pct);
+          } catch { /* ignore */ }
+        }
 
         progress.set(meta.id, (i + 1) / totalFrames);
         if (Date.now() - lastEmit > 400) { lastEmit = Date.now(); emitJob(meta); }
@@ -450,6 +471,7 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
       durationMs: Math.max(100, Math.round(durationMs)),
       viewport: { w: Math.round(vp.w), h: Math.round(vp.h), dpr },
       transparent: !!settings.transparent && !!fmt.alpha,
+      alphaMode: settings.alphaMode === 'straight' ? 'straight' : 'premultiplied',
       targetWidth: even(settings.targetWidth),
       targetHeight: even(settings.targetHeight),
       file: null,
