@@ -7,6 +7,7 @@ import DatingView from './views/DatingView';
 import VfxView from './views/VfxView';
 import LockScreenView from './views/LockScreenView';
 import InstagramView from './views/InstagramView';
+import RecorderView from './views/RecorderView';
 import { DEFAULT_APP_NAME } from './constants';
 
 
@@ -47,6 +48,8 @@ function App() {
             setView('control');
         } else if (path === '/app') {
             setView('actor');
+        } else if (path === '/recorder') {
+            setView('recorder');
         }
     }, []);
 
@@ -61,6 +64,9 @@ function App() {
         // Global Background Control
         // If we are NOT in VFX mode OR Lock Screen mode, ensure the default dark background is set.
         // VFX, Lock Screen, and Instagram handle their own background (or require black).
+        // DatingView manages the body background itself (supports transparent/alpha backgrounds)
+        if (view === 'actor' && data?.activeApp === 'dating') return;
+
         if (view === 'actor' && (data?.activeApp === 'vfx' || data?.activeApp === 'lockscreen' || data?.activeApp === 'instagram')) {
             // For VFX, LockScreen and Instagram we generally want black body
             document.body.style.backgroundColor = '#000000';
@@ -120,6 +126,16 @@ function App() {
                     >
                         Open Control Panel
                     </button>
+                    <button
+                        className="control-btn"
+                        style={{ width: '200px' }}
+                        onClick={() => {
+                            window.history.pushState({}, '', '/recorder');
+                            setView('recorder');
+                        }}
+                    >
+                        Screen Recorder
+                    </button>
                 </div>
             </div>
         );
@@ -141,6 +157,10 @@ function App() {
         }
         return <MessengerView socket={socket} data={data} />;
     };
+
+    if (view === 'recorder') {
+        return <RecorderView socket={socket} data={data} />;
+    }
 
     // Pass socket and global data down
     if (view === 'actor') {

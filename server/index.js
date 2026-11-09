@@ -982,6 +982,9 @@ app.post('/api/control/app-name', (req, res) => {
   }
 });
 
+// Screen Recorder (upload + ffmpeg transcode). Must be registered before the SPA catch-all.
+require('./recordings')(app, io, UPLOADS_DIR);
+
 // Handle React routing
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'client_build', 'index.html'));

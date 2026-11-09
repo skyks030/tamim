@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Heart, X, Info } from 'lucide-react';
+import { Heart, X, Info, Sparkles } from 'lucide-react';
 import { DEFAULT_APP_NAME } from '../constants';
 
 export default function DatingView({ data, socket }) {
@@ -234,8 +234,26 @@ export default function DatingView({ data, socket }) {
                         animationDelay: '0.2s'
                     }}>
                         <div>
-                            <h2 style={{ margin: 0, fontSize: '2rem', color: 'white' }}>
-                                {currentProfile.name} <span style={{ fontSize: '1.4rem', fontWeight: 'normal' }}>{currentProfile.age}</span>
+                            <h2 style={{ margin: 0, fontSize: '2rem', color: 'white', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0 10px' }}>
+                                <span>{currentProfile.name} <span style={{ fontSize: '1.4rem', fontWeight: 'normal' }}>{currentProfile.age}</span></span>
+                                {currentProfile.isNew && (() => {
+                                    const label = theme.newBadgeLabel ?? 'Neu hier';
+                                    return (
+                                        <span style={{
+                                            display: 'inline-flex', alignItems: 'center', gap: 4,
+                                            padding: label ? '4px 10px 4px 8px' : 6,
+                                            borderRadius: 999,
+                                            background: `linear-gradient(135deg, ${theme.primary}, #FF8E53)`,
+                                            color: 'white',
+                                            fontSize: '0.75rem', fontWeight: 700, letterSpacing: 0.2,
+                                            boxShadow: '0 2px 10px rgba(0,0,0,0.35)',
+                                            lineHeight: 1
+                                        }}>
+                                            <Sparkles size={14} fill="white" strokeWidth={1.5} />
+                                            {label}
+                                        </span>
+                                    );
+                                })()}
                             </h2>
                             {currentProfile.bio && (
                                 <p style={{ color: 'rgba(255,255,255,0.9)', margin: '10px 0 0 0', fontSize: '1rem' }}>

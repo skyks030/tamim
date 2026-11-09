@@ -8,6 +8,8 @@ RUN npm run build
 
 # Stage 2: Setup the Server
 FROM node:18-alpine
+# ffmpeg is used by the Screen Recorder to transcode to ProRes 422 HQ / H.264
+RUN apk add --no-cache ffmpeg
 WORKDIR /app
 COPY server/package*.json ./
 RUN npm install

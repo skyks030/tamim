@@ -4,7 +4,7 @@ import DatingControl from './DatingControl';
 import VfxControl from './VfxControl';
 import LockScreenControl from './LockScreenControl';
 import InstagramControl from './InstagramControl';
-import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2, RotateCcw } from 'lucide-react';
+import { Smartphone, ChevronDown, Check, Save, Edit2, Trash2, RotateCcw, Video } from 'lucide-react';
 
 export default function ControlView({ socket, data }) {
     // Local state for which control panel is visible
@@ -179,6 +179,11 @@ export default function ControlView({ socket, data }) {
                                 </>
                             )}
                         </div>
+
+                        <a href="/recorder" className="control-btn" title="Screen Recorder öffnen"
+                            style={{ width: 'auto', margin: 0, padding: '0 12px', height: 36, display: 'flex', alignItems: 'center', gap: 6, textDecoration: 'none', fontSize: '0.85rem', boxSizing: 'border-box' }}>
+                            <Video size={16} /> Recorder
+                        </a>
 
                         {/* Connection Status */}
                         <div style={{

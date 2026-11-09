@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Trash2, Upload, X, Save, Edit2, Play, ArrowUp, ArrowDown, Settings, Heart } from 'lucide-react';
+import { Plus, Trash2, Upload, X, Save, Edit2, Play, ArrowUp, ArrowDown, Settings, Heart, Sparkles } from 'lucide-react';
 import axios from 'axios';
 import { DEFAULT_APP_NAME } from '../constants';
+import ColorAlphaPicker from '../components/ColorAlphaPicker';
 
 export default function DatingControl({ socket, data }) {
     const { datingProfiles = [], activeDatingProfileId, datingAppName } = data;
@@ -246,17 +247,22 @@ export default function DatingControl({ socket, data }) {
                                 />
                             </div>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-                            <label style={{ fontSize: '0.7rem', color: '#888' }}>Background</label>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                                <input
-                                    type="color"
-                                    value={data.datingTheme?.background || "#111111"}
-                                    onChange={(e) => socket.emit('control:update_dating_theme', { background: e.target.value })}
-                                    style={{ border: 'none', width: 30, height: 30, cursor: 'pointer', background: 'none', padding: 0 }}
-                                />
-                            </div>
-                        </div>
+                        <ColorAlphaPicker
+                            label="Background (Alpha = Transparenz)"
+                            value={data.datingTheme?.background}
+                            fallback="#111111"
+                            onChange={(color) => socket.emit('control:update_dating_theme', { background: color })}
+                        />
+                    </div>
+                    <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 5 }}>
+                        <label style={{ fontSize: '0.7rem', color: '#888' }}>"Neu hier"-Badge Text (leer = nur Icon)</label>
+                        <input
+                            className="chat-input-field"
+                            style={{ padding: '6px 8px', fontSize: '0.85rem' }}
+                            value={data.datingTheme?.newBadgeLabel ?? 'Neu hier'}
+                            onChange={(e) => socket.emit('control:update_dating_theme', { newBadgeLabel: e.target.value })}
+                            placeholder="Neu hier"
+                        />
                     </div>
                 </div>
 
@@ -371,6 +377,7 @@ export default function DatingControl({ socket, data }) {
                                     {p.name}, {p.age}
                                     {activeDatingProfileId === p.id && <span style={{ fontSize: '0.75rem', color: '#22c55e', fontWeight: 'bold' }}>ACTIVE</span>}
                                     {p.isMatch && <span style={{ fontSize: '0.75rem', background: '#ec4899', color: 'white', padding: '0 6px', borderRadius: 4 }}>MATCH</span>}
+                                    {p.isNew && <span style={{ fontSize: '0.75rem', background: '#f472b6', color: 'white', padding: '0 6px', borderRadius: 4, display: 'inline-flex', alignItems: 'center', gap: 3 }}><Sparkles size={10} /> NEU</span>}
                                 </div>
                                 <div style={{ opacity: 0.6, fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                                     {p.bio || "No bio"}
@@ -457,7 +464,27 @@ export default function DatingControl({ socket, data }) {
                     <div className="glass" style={{ padding: '20px', borderRadius: '16px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 10, alignItems: 'center' }}>
                             <h2 style={{ fontSize: '1.2rem', margin: 0 }}>Edit {selectedProfile.name}</h2>
-                            <button className="control-btn secondary" style={{ width: 'auto', padding: 5 }} onClick={() => setIsEditing(false)}><X size={16} /></button>
+                            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                                <button
+                                    className="control-btn"
+                                    title={selectedProfile.isNew ? '"Neu hier" ausblenden' : 'Als "Neu hier" markieren'}
+                                    style={{
+                                        width: 'auto', padding: '5px 10px', marginBottom: 0, fontSize: '0.8rem',
+                                        display: 'flex', alignItems: 'center', gap: 5,
+                                        background: selectedProfile.isNew ? 'linear-gradient(135deg, #f472b6 0%, #ec4899 100%)' : 'rgba(0,0,0,0.3)',
+                                        border: selectedProfile.isNew ? '1px solid #f9a8d4' : '1px solid rgba(255,255,255,0.15)'
+                                    }}
+                                    onClick={() => {
+                                        const isNew = !selectedProfile.isNew;
+                                        // Save immediately and keep the open form in sync so "Save Changes" doesn't revert it
+                                        socket.emit('control:update_dating_profile', { id: selectedProfile.id, isNew });
+                                        setEditForm(f => ({ ...f, isNew }));
+                                    }}
+                                >
+                                    <Sparkles size={14} /> Neu hier
+                                </button>
+                                <button className="control-btn secondary" style={{ width: 'auto', padding: 5 }} onClick={() => setIsEditing(false)}><X size={16} /></button>
+                            </div>
                         </div>
 
                         {/* Image Upload in Edit Form for convenience */}
