@@ -1,6 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { ChevronLeft, Phone, Video, MoreVertical, Search, MessageCircle, Mic, Play, Trash2, MapPin } from 'lucide-react';
 import VirtualKeyboard from '../components/VirtualKeyboard';
+import EmojiText from '../components/EmojiText';
+import useDragScroll from '../components/useDragScroll';
 
 export default function MessengerView({ socket, data }) {
     const [viewMode, setViewMode] = useState('list'); // 'list' or 'chat'
@@ -15,6 +17,13 @@ export default function MessengerView({ socket, data }) {
     const { chats, activeChatId, actorAvatar } = data;
     const theme = data.messengerTheme || { primary: "#007AFF", background: "#000000", text: "#FFFFFF" };
     const activeChat = chats.find(c => c.id === activeChatId);
+
+    // Mouse drag scrolling with rubber band (recorder / desktop); touch screens keep native scrolling
+    const listScrollRef = useRef(null);
+    const listContentRef = useRef(null);
+    const chatContentRef = useRef(null);
+    useDragScroll(listScrollRef, listContentRef, viewMode === 'list' ? 'list' : null);
+    useDragScroll(scrollContainerRef, chatContentRef, viewMode === 'chat' && activeChat ? activeChatId : null);
 
     // Sync view mode with activeChatId changes (if control forces switch)
     useEffect(() => {
@@ -208,9 +217,9 @@ export default function MessengerView({ socket, data }) {
                             {!(notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage) && notification.title[0]}
                         </div>
                         <div style={{ flex: 1, overflow: 'hidden' }}>
-                            <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{notification.title}</h4>
+                            <h4 style={{ margin: 0, fontSize: '0.95rem' }}><EmojiText text={notification.title} /></h4>
                             <div style={{ fontSize: '0.85rem', color: '#ccc', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                                {notification.text}
+                                <EmojiText text={notification.text} />
                             </div>
                         </div>
                         <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -256,14 +265,14 @@ export default function MessengerView({ socket, data }) {
                 </div>
 
                 {/* Scrollable List Container */}
-                <div style={{
+                <div ref={listScrollRef} style={{
                     flex: 1,
                     overflowY: 'scroll', // FORCE SCROLL ALWAYS
                     WebkitOverflowScrolling: 'touch',
                     position: 'relative'
                 }}>
                     {/* Inner wrapper forcing min-height for elastic scroll */}
-                    <div className="chat-messages" style={{
+                    <div ref={listContentRef} className="chat-messages" style={{
                         padding: 0,
                         gap: 0,
                         minHeight: 'calc(100% + 1px)' // FORCE SCROLL
@@ -297,7 +306,7 @@ export default function MessengerView({ socket, data }) {
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 4 }}>
-                                            <h3 style={{ margin: 0, fontSize: '1rem' }}>{chat.name}</h3>
+                                            <h3 style={{ margin: 0, fontSize: '1rem' }}><EmojiText text={chat.name} /></h3>
                                             <span style={{ fontSize: '0.75rem', color: '#666' }}>Now</span>
                                         </div>
                                         <div style={{
@@ -308,7 +317,7 @@ export default function MessengerView({ socket, data }) {
                                             textOverflow: 'ellipsis',
                                             maxWidth: '200px'
                                         }}>
-                                            {preview}
+                                            <EmojiText text={preview} />
                                         </div>
                                     </div>
                                 </div>
@@ -378,9 +387,9 @@ export default function MessengerView({ socket, data }) {
                         {!(notification.chatId && chats.find(c => c.id === notification.chatId)?.avatarImage) && notification.title[0]}
                     </div>
                     <div style={{ flex: 1, overflow: 'hidden' }}>
-                        <h4 style={{ margin: 0, fontSize: '0.95rem' }}>{notification.title}</h4>
+                        <h4 style={{ margin: 0, fontSize: '0.95rem' }}><EmojiText text={notification.title} /></h4>
                         <div style={{ fontSize: '0.85rem', color: '#ccc', textOverflow: 'ellipsis', whiteSpace: 'nowrap', overflow: 'hidden' }}>
-                            {notification.text}
+                            <EmojiText text={notification.text} />
                         </div>
                     </div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
@@ -415,7 +424,7 @@ export default function MessengerView({ socket, data }) {
                     {!activeChat.avatarImage && activeChat.name[0]}
                 </div>
                 <div className="header-info" style={{ flex: 1 }}>
-                    <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white' }}>{activeChat.name}</h2>
+                    <h2 style={{ margin: 0, fontSize: '1.1rem', color: 'white' }}><EmojiText text={activeChat.name} /></h2>
                     <span style={{ color: 'rgba(255,255,255,0.8)', fontSize: '0.8rem' }}>{activeChat.status || "Online recently"}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '15px' }}>
@@ -480,7 +489,7 @@ export default function MessengerView({ socket, data }) {
                         }}
                     >
                         {/* SCROLL WRAPPER - Inner content that grows */}
-                        <div style={{
+                        <div ref={chatContentRef} style={{
                             display: 'flex',
                             flexDirection: 'column',
                             justifyContent: 'flex-start',
@@ -502,7 +511,7 @@ export default function MessengerView({ socket, data }) {
                                             margin: '10px 0',
                                             flexShrink: 0
                                         }}>
-                                            {msg.text}
+                                            <EmojiText text={msg.text} />
                                         </div>
                                     );
                                 }
@@ -613,8 +622,17 @@ export default function MessengerView({ socket, data }) {
                                                     {formatTime(voiceDuration)}
                                                 </span>
                                             </div>
+                                        ) : (msg.color || msg.link) ? (
+                                            <span style={{
+                                                color: msg.color || undefined,
+                                                textDecoration: msg.link ? 'underline' : undefined,
+                                                textUnderlineOffset: msg.link ? '0.15em' : undefined,
+                                                wordBreak: msg.link ? 'break-word' : undefined
+                                            }}>
+                                                <EmojiText text={msg.text} />
+                                            </span>
                                         ) : (
-                                            msg.text
+                                            <EmojiText text={msg.text} />
                                         )}
                                     </div>
                                 );
@@ -676,7 +694,7 @@ export default function MessengerView({ socket, data }) {
                                 </div>
                             ) : (
                                 localInputValue ? (
-                                    <span style={{ whiteSpace: 'pre-wrap' }}>{localInputValue}</span>
+                                    <span style={{ whiteSpace: 'pre-wrap' }}><EmojiText text={localInputValue} /></span>
                                 ) : (
                                     <span style={{ opacity: 0.5 }}>Type a message...</span>
                                 )

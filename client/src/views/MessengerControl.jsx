@@ -1,11 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Plus, Edit2, Save, Send, Trash2, RefreshCw, MessageSquare, MapPin } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Plus, Edit2, Save, Send, Trash2, RefreshCw, MessageSquare, MapPin, Link as LinkIcon, Palette } from 'lucide-react';
+
+// Typical messenger link colour (light blue, readable on dark and on coloured bubbles)
+const LINK_COLOR = '#5AC8FA';
 import axios from 'axios';
 
 export default function MessengerControl({ socket, data }) {
     const [selectedChatId, setSelectedChatId] = useState(null);
     const [newChatName, setNewChatName] = useState("");
     const [customPresetValue, setCustomPresetValue] = useState("");
+    const [presetStyle, setPresetStyle] = useState({ color: null, link: false }); // text colour / link look of the NEXT preset
     const [scenarioName, setScenarioName] = useState("");
     const [isUploading, setIsUploading] = useState(false);
     const [uploadPercent, setUploadPercent] = useState(0);
@@ -114,8 +118,9 @@ export default function MessengerControl({ socket, data }) {
 
     const handleAddPreset = (sender = 'match') => {
         if (selectedChat && customPresetValue.trim()) {
-            socket.emit('control:save_preset', { chatId: selectedChat.id, text: customPresetValue, sender });
+            socket.emit('control:save_preset', { chatId: selectedChat.id, text: customPresetValue, sender, color: presetStyle.color, link: presetStyle.link });
             setCustomPresetValue("");
+            setPresetStyle({ color: null, link: false });
         }
     };
 
@@ -146,7 +151,15 @@ export default function MessengerControl({ socket, data }) {
 
     // Actions
     const sendTyping = () => socket.emit('control:typing_start', selectedChatId);
-    const sendMessage = (text, sender = 'match') => socket.emit('control:send_message', { chatId: selectedChatId, text, sender });
+    const sendMessage = (text, sender = 'match', style = {}) => socket.emit('control:send_message', { chatId: selectedChatId, text, sender, color: style.color || null, link: !!style.link });
+    // colour pickers fire continuously while dragging -> only send the last value
+    const styleTimers = useRef({});
+    const updatePresetStyle = (presetId, style, debounce = false) => {
+        const chatId = selectedChat.id;
+        clearTimeout(styleTimers.current[presetId]);
+        const send = () => socket.emit('control:update_preset', { chatId, presetId, ...style });
+        if (debounce) styleTimers.current[presetId] = setTimeout(send, 250); else send();
+    };
     const clearChat = () => {
         if (confirm("DELETE ALL MESSAGES? This cannot be undone.")) {
             socket.emit('control:clear', selectedChatId);
@@ -712,11 +725,29 @@ export default function MessengerControl({ socket, data }) {
                                     <div style={{ display: 'flex', gap: 5, marginBottom: 5 }}>
                                         <input
                                             className="chat-input-field"
-                                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8 }}
                                             placeholder="Add preset message..."
                                             value={customPresetValue}
                                             onChange={e => setCustomPresetValue(e.target.value)}
+                                            style={{ height: 36, fontSize: '0.9rem', borderRadius: 8, color: presetStyle.color || undefined, textDecoration: presetStyle.link ? 'underline' : undefined }}
                                         />
+                                    </div>
+                                    {/* Text style of the new preset: normal, link, or any colour */}
+                                    <div style={{ display: 'flex', gap: 5, marginBottom: 5, alignItems: 'center', fontSize: '0.8rem' }}>
+                                        <span style={{ opacity: 0.7, marginRight: 2 }}>Text:</span>
+                                        <button className={`control-btn ${!presetStyle.color && !presetStyle.link ? 'primary' : 'secondary'}`} style={{ width: 'auto', marginBottom: 0, padding: '5px 10px', fontSize: '0.8rem' }}
+                                            onClick={() => setPresetStyle({ color: null, link: false })}>
+                                            Standard
+                                        </button>
+                                        <button className={`control-btn ${presetStyle.link ? 'primary' : 'secondary'}`} style={{ width: 'auto', marginBottom: 0, padding: '5px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 4 }}
+                                            onClick={() => setPresetStyle({ color: LINK_COLOR, link: true })}>
+                                            <LinkIcon size={13} /> Link
+                                        </button>
+                                        <label className={`control-btn ${presetStyle.color && !presetStyle.link ? 'primary' : 'secondary'}`} style={{ width: 'auto', marginBottom: 0, padding: '5px 10px', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 5, cursor: 'pointer' }}>
+                                            <Palette size={13} /> Farbe
+                                            <span style={{ width: 14, height: 14, borderRadius: 4, border: '1px solid rgba(255,255,255,0.5)', background: presetStyle.color || 'transparent' }} />
+                                            <input type="color" value={presetStyle.color || '#ffffff'} style={{ width: 0, height: 0, opacity: 0, border: 0, padding: 0 }}
+                                                onChange={e => setPresetStyle(s => ({ ...s, color: e.target.value }))} />
+                                        </label>
                                     </div>
                                     <div style={{ display: 'flex', gap: 5, marginBottom: 15 }}>
                                         <button className="control-btn secondary" style={{ marginBottom: 0, fontSize: '0.8rem' }} onClick={() => handleAddPreset('match')}>
@@ -734,6 +765,7 @@ export default function MessengerControl({ socket, data }) {
                                             const text = isObj ? preset.text : preset;
                                             const sender = isObj ? preset.sender : 'match';
                                             const id = isObj ? preset.id : `legacy-${idx}`;
+                                            const style = isObj ? { color: preset.color || null, link: !!preset.link } : {};
 
                                             // Ensure we don't break if id is missing in legacy
                                             return (
@@ -754,11 +786,47 @@ export default function MessengerControl({ socket, data }) {
                                                                 flex: 1,
                                                                 opacity: 0.9
                                                             }}
-                                                            onClick={() => sendMessage(text, sender)}
+                                                            onClick={() => sendMessage(text, sender, style)}
                                                         >
                                                             {sender === 'me' ? '👤 ' : '❤️ '}
-                                                            {text}
+                                                            <span style={{ color: style.color || undefined, textDecoration: style.link ? 'underline' : undefined }}>{text}</span>
                                                         </button>
+                                                        {isObj && (
+                                                            <button
+                                                                className={`control-btn ${style.link ? 'primary' : 'secondary'}`}
+                                                                title={style.link ? 'Link-Darstellung aus' : 'Als Link darstellen'}
+                                                                style={{ width: 'auto', marginBottom: 0, padding: 8 }}
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    updatePresetStyle(id, style.link ? { link: false, color: style.color === LINK_COLOR ? null : style.color } : { link: true, color: style.color || LINK_COLOR });
+                                                                }}
+                                                            >
+                                                                <LinkIcon size={14} />
+                                                            </button>
+                                                        )}
+                                                        {isObj && (
+                                                            <label
+                                                                className="control-btn secondary"
+                                                                title="Textfarbe dieser Nachricht"
+                                                                style={{ width: 'auto', marginBottom: 0, padding: 8, display: 'flex', alignItems: 'center', cursor: 'pointer', position: 'relative' }}
+                                                            >
+                                                                {style.color
+                                                                    ? <span style={{ width: 14, height: 14, borderRadius: 4, border: '1px solid rgba(255,255,255,0.6)', background: style.color, display: 'block' }} />
+                                                                    : <Palette size={14} />}
+                                                                <input type="color" value={style.color || '#ffffff'} style={{ position: 'absolute', width: 0, height: 0, opacity: 0, border: 0, padding: 0 }}
+                                                                    onChange={e => updatePresetStyle(id, { color: e.target.value }, true)} />
+                                                            </label>
+                                                        )}
+                                                        {isObj && style.color && !style.link && (
+                                                            <button
+                                                                className="control-btn secondary"
+                                                                title="Standard-Textfarbe"
+                                                                style={{ width: 'auto', marginBottom: 0, padding: '8px 6px', fontSize: '0.75rem' }}
+                                                                onClick={(e) => { e.stopPropagation(); updatePresetStyle(id, { color: null }); }}
+                                                            >
+                                                                ✕
+                                                            </button>
+                                                        )}
                                                         {isObj && (
                                                             <button
                                                                 className="control-btn secondary"

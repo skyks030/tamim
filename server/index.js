@@ -564,11 +564,14 @@ io.on('connection', (socket) => {
 
 
   // Add Preset (Enhanced)
-  socket.on('control:save_preset', ({ chatId, text, sender }) => {
+  socket.on('control:save_preset', ({ chatId, text, sender, color, link }) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       if (!chat.presets) chat.presets = [];
-      chat.presets.push({ id: uuidv4(), text, sender: sender || 'match' });
+      const preset = { id: uuidv4(), text, sender: sender || 'match' };
+      if (color) preset.color = color; // optional text colour of this one message
+      if (link) preset.link = true;    // shown like a tappable link (underlined)
+      chat.presets.push(preset);
       saveDb();
       io.emit('data:update', db);
     }
@@ -585,12 +588,14 @@ io.on('connection', (socket) => {
   });
 
   // Edit Preset Text
-  socket.on('control:update_preset', ({ chatId, presetId, text }) => {
+  socket.on('control:update_preset', ({ chatId, presetId, text, color, link }) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat && chat.presets) {
       const preset = chat.presets.find(p => p.id === presetId);
       if (preset) {
-        preset.text = text;
+        if (typeof text === 'string') preset.text = text;
+        if (color !== undefined) { if (color) preset.color = color; else delete preset.color; }
+        if (link !== undefined) { if (link) preset.link = true; else delete preset.link; }
         saveDb();
         io.emit('data:update', db);
       }
@@ -659,10 +664,12 @@ io.on('connection', (socket) => {
   });
 
   // Control sending a message (Match OR Actor from Control)
-  socket.on('control:send_message', ({ chatId, text, sender }) => {
+  socket.on('control:send_message', ({ chatId, text, sender, color, link }) => {
     const chat = db.chats.find(c => c.id === chatId);
     if (chat) {
       const msg = { id: Date.now(), text, sender: sender || 'match' }; // Allow 'me' or 'match'
+      if (color) msg.color = color;
+      if (link) msg.link = true;
       chat.messages.push(msg);
       saveDb();
 
@@ -983,6 +990,7 @@ app.post('/api/control/app-name', (req, res) => {
 });
 
 // Server-side Screen Recorder (virtual phone + frame-exact rendering). Must be registered before the SPA catch-all.
+require('./emoji')(app, DATA_DIR);
 require('./recorder')(app, io, UPLOADS_DIR, () => db);
 
 // Handle React routing

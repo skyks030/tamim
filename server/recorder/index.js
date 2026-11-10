@@ -347,6 +347,21 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
         if (document.fonts?.ready) await document.fonts.ready;
       });
 
+      // Preload the Noto 3D emoji images of every text in the snapshot and the recorded events
+      await page.evaluate(async (json) => {
+        const re = /\p{RI}\p{RI}|[#*0-9]\uFE0F?\u20E3|\p{Extended_Pictographic}(?:\uFE0F|\p{EMod})?(?:\u200D\p{Extended_Pictographic}(?:\uFE0F|\p{EMod})?)*/gu;
+        const names = new Set();
+        for (const m of json.matchAll(re)) {
+          const cps = [...m[0]].map(c => c.codePointAt(0)).filter(cp => cp !== 0xfe0f);
+          names.add(`emoji_u${cps.map(cp => cp.toString(16).padStart(4, '0')).join('_')}.png`);
+        }
+        await Promise.all([...names].slice(0, 400).map(n => new Promise(res => {
+          const img = new Image();
+          img.onload = img.onerror = () => (img.decode ? img.decode().catch(() => { }).then(res) : res());
+          img.src = `/emoji/3d/${n}`;
+        })));
+      }, JSON.stringify([meta.timeline.snapshot, meta.timeline.events]));
+
       // Pre-roll (same settling time the live page had before REC started)
       await page.evaluate(ms => window.__vt.advance(ms), LIVE_PREROLL_MS);
 
@@ -409,6 +424,13 @@ module.exports = function setupRecorder(app, io, uploadsDir, getDb) {
         }
         if (tFrame > vt) { await page.evaluate(ms => window.__vt.advance(ms), tFrame - vt); vt = tFrame; }
         else await page.evaluate(() => window.__vt.settle());
+
+        // never capture a frame while an image (e.g. an emoji in a new message) is still loading
+        for (let w = 0; w < 100; w++) {
+          const pending = await page.evaluate(() => [...document.images].some(im => !im.complete));
+          if (!pending) break;
+          await new Promise(r => setTimeout(r, 20));
+        }
 
         const shot = await cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true, captureBeyondViewport: false });
         const png = Buffer.from(shot.data, 'base64');
